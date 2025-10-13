@@ -8,7 +8,7 @@ from database import get_db
 from models.database import User, Session as DBSession
 from schemas.schemas import (
     UserCreate, UserResponse, UserUpdate, UserLogin,
-    TokenResponse, RefreshTokenRequest, SessionResponse,
+    TokenResponse, RefreshTokenRequest, SessionResponse, SessionCreate,
     PaginationParams, PaginatedResponse
 )
 from auth.auth_service import AuthService, get_current_user
