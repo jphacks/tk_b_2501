@@ -1,36 +1,82 @@
-# サンプル（プロダクト名）
+# Mobile App Project
 
-[![IMAGE ALT TEXT HERE](https://jphacks.com/wp-content/uploads/2025/05/JPHACKS2025_ogp.jpg)](https://www.youtube.com/watch?v=lA9EluZugD8)
+React Native（iOS）、FastAPI、PostgreSQL、Dockerを使用したスマホアプリ開発プロジェクトです。
 
-## 製品概要
-### 背景(製品開発のきっかけ、課題等）
-### 製品説明（具体的な製品の説明）
-### 特長
-#### 1. 特長1
-#### 2. 特長2
-#### 3. 特長3
+## プロジェクト構成
 
-### 解決出来ること
-### 今後の展望
-### 注力したこと（こだわり等）
-* 
-* 
+```
+tk_b_2501/
+├── frontend/          # React Native iOSアプリ
+│   ├── App.tsx
+│   ├── package.json
+│   └── ...
+├── backend/           # FastAPI バックエンド
+│   ├── main.py
+│   ├── requirements.txt
+│   └── ...
+├── docker-compose.yml # Docker環境設定
+└── SETUP.md          # セットアップガイド
+```
 
-## 開発技術
-### 活用した技術
-#### API・データ
-* 
-* 
+## 技術スタック
 
-#### フレームワーク・ライブラリ・モジュール
-* 
-* 
+### フロントエンド
+- **React Native** 0.72.6
+- **TypeScript**
+- **React Navigation**
+- **Axios** (HTTP クライアント)
 
-#### デバイス
-* 
-* 
+### バックエンド
+- **FastAPI** 0.104.1
+- **SQLAlchemy** (ORM)
+- **PostgreSQL** (データベース)
+- **Pydantic** (データ検証)
 
-### 独自技術
-#### ハッカソンで開発した独自機能・技術
-* 独自で開発したものの内容をこちらに記載してください
-* 特に力を入れた部分をファイルリンク、またはcommit_idを記載してください。
+### インフラ
+- **Docker** & **Docker Compose**
+- **PostgreSQL** (コンテナ)
+
+## クイックスタート
+
+### 1. 環境セットアップ
+詳細は [SETUP.md](./SETUP.md) を参照してください。
+
+### 2. 開発サーバー起動
+```bash
+# Docker環境を起動
+docker-compose up -d
+
+# フロントエンド（別ターミナル）
+cd frontend
+npm install
+npm start
+
+# iOSアプリ起動（Mac環境のみ）
+npm run ios
+
+# バックエンド（別ターミナル）
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
+
+### 3. アクセス
+- **iOSアプリ**: iOSシミュレーターで起動
+- **API**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
+
+## 開発環境
+
+- **Windows 11**: 開発環境（あなた）
+- **Mac**: iOS開発環境（他の開発メンバー）
+
+## 主要機能
+
+- ユーザー管理API
+- RESTful API設計
+- データベース連携
+- クロスプラットフォーム対応
+
+## ライセンス
+
+このプロジェクトはMITライセンスの下で公開されています。

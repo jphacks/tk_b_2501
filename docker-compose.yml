@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: mobileapp_db
+    environment:
+      POSTGRES_DB: mobileapp
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d mobileapp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mobileapp_network
+
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mobileapp_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/mobileapp
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - DEBUG=True
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - mobileapp_network
+    restart: unless-stopped
+
+  # 開発用のデータベース管理ツール
+  adminer:
+    image: adminer:latest
+    container_name: mobileapp_adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    networks:
+      - mobileapp_network
+
+volumes:
+  postgres_data:
+
+networks:
+  mobileapp_network:
+    driver: bridge
