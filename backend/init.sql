@@ -66,6 +66,6 @@ CREATE INDEX IF NOT EXISTS idx_photos_location ON photos USING GIST(location);
 -- サンプルデータの挿入（開発環境用）
 -- パスワードハッシュは 'password' のbcryptハッシュ
 INSERT INTO users (id, email, password_hash, username) VALUES 
-    ('550e8400-e29b-41d4-a716-446655440001', 'test1@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/9Kz8K2C', 'テストユーザー1'),
-    ('550e8400-e29b-41d4-a716-446655440002', 'test2@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/9Kz8K2C', 'テストユーザー2')
+    ('550e8400-e29b-41d4-a716-446655440001', 'test1@example.com', '$2b$12$pvU4FTRcN72EPi/ij1E2sOO2uc.cFl5hUSYT6Bt38BWP8t9V5gXFe', 'テストユーザー1'),
+    ('550e8400-e29b-41d4-a716-446655440002', 'test2@example.com', '$2b$12$pvU4FTRcN72EPi/ij1E2sOO2uc.cFl5hUSYT6Bt38BWP8t9V5gXFe', 'テストユーザー2')
 ON CONFLICT (email) DO NOTHING;
