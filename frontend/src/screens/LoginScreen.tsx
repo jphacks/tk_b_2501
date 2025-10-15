@@ -1,6 +1,6 @@
 // src/screens/LoginScreen.tsx
 
-// 1. 从 'react' 导入 useState
+// 1. useStateとAlertに加えて、Platformをインポートします
 import React, { useState } from 'react';
 import {
   View,
@@ -8,30 +8,67 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert, // 导入 Alert 用于简单的弹窗提示
+  Alert,
+  Platform, // OSを判定するためにインポート
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
+// RootStackParamListはSignUpScreenからインポートするように変更してもOKです
 export type RootStackParamList = {
   Login: undefined;
   SignUp: undefined;
 };
 
-type LoginScreenProps = NativeStackScreenProps<RootStackParamList, 'Login'>;
+type LoginScreenProps = NativeStackScreenProps<RootStackParamList, 'Login'> & {
+  onLoginSuccess: () => void; // 「引数なしで何も返さない関数」という型
+};
 
-const LoginScreen = ({ navigation }: LoginScreenProps) => {
-  // 2. 创建两个 "状态" 变量来存储输入框的内容
-  // setEmail 和 setPassword 是用来更新它们的函数
+// 2. バックエンドサーバーのベースURLを定義します（SignUpScreenと同じもの）
+const API_BASE_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
+
+const LoginScreen = ({ navigation, onLoginSuccess }: LoginScreenProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // 3. 创建一个处理登录按钮点击的函数
-  const handleLogin = () => {
-    console.log('准备登录:', { email, password }); // 在控制台打印，方便调试
-    // 这里是明天你要写真正 API 调用逻辑的地方！
-    // 比如：const response = await api.login(email, password);
-    Alert.alert('登录按钮被点击', `邮箱: ${email}\n密码: ${password}`);
+  // 3. handleLoginをasync関数に変更します
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('エラー', 'メールアドレスとパスワードを入力してください。');
+      return;
+    }
+
+    try {
+      // 4. fetchを使用して、バックエンドの /auth/login エンドポイントにPOSTリクエストを送信
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // バックエンドからのエラーメッセージがあれば表示
+        throw new Error(data.message || 'ログインに失敗しました。');
+      }
+
+      // 5. ログイン成功！
+      //    将来的には、ここで受け取ったトークンを保存し、メイン画面に遷移します。
+      console.log('ログイン成功:', data);
+      onLoginSuccess();
+      // 例: navigation.replace('MainApp'); // MainAppは後で作成するメイン画面のナビゲーター
+
+    } catch (error: any) {
+      // 6. エラーをキャッチして表示
+      console.error('ログインエラー:', error);
+      Alert.alert('ログインエラー', error.message);
+    }
   };
 
   return (
@@ -47,10 +84,8 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
             placeholder="Email Address"
             placeholderTextColor="#888"
             keyboardType="email-address"
-            autoCapitalize="none" // 禁止首字母自动大写
-            // 4. 将输入框的值绑定到我们的状态变量
+            autoCapitalize="none"
             value={email}
-            // 5. 当用户输入时，调用 setEmai 更新状态
             onChangeText={setEmail}
           />
           <TextInput
@@ -61,7 +96,6 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
             value={password}
             onChangeText={setPassword}
           />
-          {/* 6. 让 Submit 按钮调用我们的 handleLogin 函数 */}
           <TouchableOpacity style={styles.submitButton} onPress={handleLogin}>
             <Text style={styles.submitButtonText}>Submit</Text>
           </TouchableOpacity>
@@ -77,7 +111,7 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
   );
 };
 
-// 样式部分保持不变...
+// スタイル部分は変更ありません
 const styles = StyleSheet.create({
   outerContainer: { flex: 1, backgroundColor: 'black' },
   safeArea: { flex: 1 },
