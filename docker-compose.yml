@@ -43,7 +43,7 @@ services:
       - mobileapp_network
     restart: unless-stopped
 
-  # 開発用のデータベース管理ツール
+  # 開発用のデータベース管理ツール (Adminer)
   adminer:
     image: adminer:latest
     container_name: mobileapp_adminer
@@ -54,8 +54,25 @@ services:
     networks:
       - mobileapp_network
 
+  # pgAdmin（ブラウザからアクセスできるPostgreSQL管理UI）
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: mobileapp_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: adminpass
+    ports:
+      - "5050:80"
+    volumes:
+      - ./pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - db
+    networks:
+      - mobileapp_network
+
 volumes:
   postgres_data:
+  pgadmin_data:
 
 networks:
   mobileapp_network:

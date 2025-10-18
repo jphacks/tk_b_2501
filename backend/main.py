@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import create_engine, Column, Integer, String, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel
@@ -14,9 +14,9 @@ from routers import auth, photos
 load_dotenv()
 
 # Database setup
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/mobileapp")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@db:5432/mobileapp")
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, future=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
@@ -59,6 +59,17 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.utcnow()}
+
+@app.get("/health/db")
+def db_health_check():
+    """DB疎通確認用API"""
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT 1")).scalar_one()
+            postgis = conn.execute(text("SELECT PostGIS_Version()")).scalar_one_or_none()
+        return {"db_connected": result == 1, "postgis_version": postgis}
+    except Exception as e:
+        return {"db_connected": False, "error": str(e)}
 
 if __name__ == "__main__":
     import uvicorn
