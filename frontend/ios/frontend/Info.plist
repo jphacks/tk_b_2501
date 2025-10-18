@@ -42,7 +42,11 @@
 		</dict>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string>このアプリは位置情報を使用して写真の撮影場所を記録します</string>
+	<key>NSCameraUsageDescription</key>
+	<string>このアプリは写真を撮影するためにカメラへのアクセスが必要です</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>このアプリは写真を選択するためにフォトライブラリへのアクセスが必要です</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
