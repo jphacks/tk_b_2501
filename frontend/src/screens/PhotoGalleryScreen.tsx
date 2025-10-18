@@ -68,7 +68,7 @@ const PhotoGalleryScreen = () => {
   const fetchAndSortLocalPhotos = async (currentSortOrder: SortOrder) => {
     setLoading(true);
     console.log(`Sorting local photos: ${currentSortOrder}`);
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise(resolve => setTimeout(() => resolve(undefined), 50));
     let sortedPhotos: LocalPhoto[];
     if (currentSortOrder === 'random') {
       sortedPhotos = [...LOCAL_PHOTOS_DATA];
