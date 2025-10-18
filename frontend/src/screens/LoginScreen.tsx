@@ -39,16 +39,13 @@ const LoginScreen = ({ navigation, onLoginSuccess }: LoginScreenProps) => {
     }
 
     try {
-      // 4. fetchを使用して、バックエンドの /auth/login エンドポイントにPOSTリクエストを送信
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email,
-          password: password,
-        }),
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
