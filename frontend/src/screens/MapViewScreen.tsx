@@ -1,11 +1,11 @@
 // src/screens/MapViewScreen.tsx
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 // 1. StyleSheetとSafeAreaViewをインポートします
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View, Text, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // 2. react-native-mapsからMapViewとMarkerをインポートします
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, Region } from 'react-native-maps';
 
 // 3. APIが完成するまでの「ダミーのピンデータ」を作成します
 //    東京の名所の座標をいくつか用意しましょう
@@ -30,7 +30,61 @@ const DUMMY_MARKERS = [
   },
 ];
 
+type Nearby_Photos = {
+  id: string;
+  title: string;
+  description: string;
+  lat: number;
+  lng: number;
+  accuracy_m: number;
+  address: string;
+  visibility: string;
+  taken_at: string;
+  user_id: string;
+  s3_key: string;
+  mime_type: string;
+  size_bytes: number;
+  exif: Record<string, unknown>;
+  created_at: string;
+};
+
 const MapViewScreen = () => {
+
+  const [markers, setMarkers] = useState<Nearby_Photos[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [region, setRegion] = useState<Region>({
+    latitude: 35.6895,
+    longitude: 139.6917,
+    latitudeDelta: 0.1,
+    longitudeDelta: 0.1,
+  });
+
+  const BACKEND = 'http://localhost:8000';
+  const fetchNearbyPhotos = async (lat: number, lng: number) => {
+    try {
+      setLoading(true);
+      const res = await fetch(
+        `${BACKEND}/photos/nearby/photos?lat=${lat}&lng=${lng}`
+      );
+      if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
+      const data: Nearby_Photos[] = await res.json();
+      setMarkers(data);
+    } catch (error) {
+      console.error('Error fetching markers:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNearbyPhotos(region.latitude, region.longitude);
+  }, []);
+
+  const onRegionChangeComplete = async (newRegion: Region) => {
+    setRegion(newRegion);
+    await fetchNearbyPhotos(newRegion.latitude, newRegion.longitude);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* 4. 他の画面と共通のヘッダーを設置します */}
@@ -41,19 +95,16 @@ const MapViewScreen = () => {
       {/* 5. MapViewコンポーネントを設置します */}
       <MapView
         style={styles.map}
-        // 地図の初期表示位置と縮尺を設定します（これは東京中心の座標です）
-        initialRegion={{
-          latitude: 35.6895,
-          longitude: 139.6917,
-          latitudeDelta: 0.1, // 数値が小さいほどズームイン
-          longitudeDelta: 0.1,
-        }}
+        initialRegion={region}
+        onRegionChangeComplete={onRegionChangeComplete}
       >
-        {/* 6. ダミーデータをループして、地図上にピン（Marker）を配置します */}
-        {DUMMY_MARKERS.map(marker => (
+        {markers.map((marker) => (
           <Marker
             key={marker.id}
-            coordinate={marker.coordinate}
+            coordinate={{
+              latitude: marker.lat,
+              longitude: marker.lng,
+            }}
             title={marker.title}
             description={marker.description}
           />
