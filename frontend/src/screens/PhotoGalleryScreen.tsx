@@ -99,9 +99,21 @@ const PhotoGalleryScreen = () => {
   };
 
   // --- 5. ソートオプション選択時の処理を再追加 ---
+  // --- ソートオプション選択時の処理を変更 ---
   const handleSortSelect = (selectedSortKey: SortOrder) => {
-    setSortOrder(selectedSortKey); // 選択されたソート順をセット
-    setIsModalVisible(false);    // モーダルを閉じる
+    setIsModalVisible(false); // 先にモーダルを閉じる
+
+    if (selectedSortKey === 'random') {
+      // ★ ランダムが選択された場合 ★
+      // sortOrder が既に 'random' であっても、強制的に再シャッフルを実行
+      fetchAndSortLocalPhotos('random');
+      // 状態も 'random' に設定（既に 'random' でも問題ない）
+      setSortOrder('random');
+    } else {
+      // ★ ランダム以外が選択された場合 ★
+      // 通常通り sortOrder を更新する (useEffect がソートを実行する)
+      setSortOrder(selectedSortKey);
+    }
   };
 
   // --- FlatList の各写真アイテムをレンダリングする関数 (変更なし) ---
