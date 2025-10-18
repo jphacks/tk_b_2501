@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import create_engine, Column, Integer, String, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel
@@ -14,9 +14,9 @@ from routers import auth, photos
 load_dotenv()
 
 # Database setup
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/mobileapp")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@db:5432/mobileapp")
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, future=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
@@ -59,6 +59,7 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.utcnow()}
+
 
 if __name__ == "__main__":
     import uvicorn
