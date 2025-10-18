@@ -1,7 +1,7 @@
 /* 写真一覧画面 */
 // src/screens/PhotoGalleryScreen.tsx
 
-import React from 'react';
+import React, { useState } from 'react';
 // 1. FlatList, SafeAreaView, TouchableOpacity などをインポートします
 import {
   View,
@@ -10,10 +10,15 @@ import {
   FlatList,
   TouchableOpacity,
   Dimensions, // 画面のサイズを取得するためにインポート
+  Alert,
+  Platform,
+  ActivityIndicator,
 } from 'react-native';
 // 2. アイコンも使えるようにインポートしておきます
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/FontAwesome';
+// 画像ピッカー（ネイティブの画像選択ダイアログを開きます）
+import { launchImageLibrary } from 'react-native-image-picker';
 
 // 3. APIが完成するまでの「ダミーデータ」を作成します
 //    8つの空のオブジェクトを用意し、写真のプレースホルダーとして使います
@@ -33,6 +38,72 @@ const { width } = Dimensions.get('window');
 const ITEM_SIZE = (width - 20) / 2; // (画面幅 - 左右の余白) / 2列
 
 const PhotoGalleryScreen = () => {
+  const [uploading, setUploading] = useState(false);
+
+  // 画像選択 → アップロードの処理
+  const pickAndUploadImage = () => {
+    launchImageLibrary(
+      { mediaType: 'photo', selectionLimit: 1 },
+      async (response) => {
+        if (response.didCancel) {
+          return;
+        }
+        if (response.errorCode) {
+          Alert.alert('エラー', `画像選択に失敗しました: ${response.errorMessage || response.errorCode}`);
+          return;
+        }
+
+        const asset = response.assets && response.assets[0];
+        if (!asset || !asset.uri) {
+          Alert.alert('エラー', '選択された画像が取得できませんでした');
+          return;
+        }
+
+        try {
+          setUploading(true);
+
+          const uri = asset.uri;
+          // ファイル名と MIME タイプを準備
+          const name = asset.fileName || `photo.${(asset.type && asset.type.split('/')[1]) || 'jpg'}`;
+          const type = asset.type || 'image/jpeg';
+
+          const formData = new FormData();
+          // React Native の FormData は { uri, name, type } のオブジェクトを受け取ります
+          formData.append('file', {
+            uri: Platform.OS === 'ios' && uri.startsWith('file://') ? uri : uri,
+            name,
+            type,
+          } as any);
+
+          // 任意でタイトル/説明を付ける例
+          // formData.append('title', 'Uploaded from app');
+
+          // バックエンドの URL（開発環境では適宜変更してください）
+          const BACKEND = 'http://localhost:8000';
+
+          const res = await fetch(`${BACKEND}/photos/upload`, {
+            method: 'POST',
+            body: formData,
+            // RN の fetch + FormData では Content-Type を明示的にセットしないこと
+            headers: {
+              Accept: 'application/json',
+            },
+          });
+
+          if (!res.ok) {
+            const text = await res.text();
+            throw new Error(text || `HTTP ${res.status}`);
+          }
+
+          Alert.alert('完了', '画像をアップロードしました');
+        } catch (err: any) {
+          Alert.alert('アップロード失敗', err.message || String(err));
+        } finally {
+          setUploading(false);
+        }
+      }
+    );
+  };
   // 4. 写真アイテムをレンダリングするための関数
   const renderPhotoItem = ({ item }: { item: { id: string, name: string } }) => (
     <View style={styles.photoItem}>
@@ -66,8 +137,12 @@ const PhotoGalleryScreen = () => {
       />
 
       {/* 4. フローティングアクションボタン（写真追加ボタン） */}
-      <TouchableOpacity style={styles.fab}>
-        <Icon name="plus" size={24} color="white" />
+      <TouchableOpacity style={styles.fab} onPress={pickAndUploadImage} disabled={uploading}>
+        {uploading ? (
+          <ActivityIndicator color="white" />
+        ) : (
+          <Icon name="plus" size={24} color="white" />
+        )}
       </TouchableOpacity>
     </SafeAreaView>
   );
