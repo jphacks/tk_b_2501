@@ -60,16 +60,6 @@ async def root():
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.utcnow()}
 
-@app.get("/health/db")
-def db_health_check():
-    """DB疎通確認用API"""
-    try:
-        with engine.connect() as conn:
-            result = conn.execute(text("SELECT 1")).scalar_one()
-            postgis = conn.execute(text("SELECT PostGIS_Version()")).scalar_one_or_none()
-        return {"db_connected": result == 1, "postgis_version": postgis}
-    except Exception as e:
-        return {"db_connected": False, "error": str(e)}
 
 if __name__ == "__main__":
     import uvicorn

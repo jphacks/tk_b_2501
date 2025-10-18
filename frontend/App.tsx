@@ -1,39 +1,46 @@
-import React from 'react';
-import { StatusBar, StyleSheet, Text, useColorScheme, View } from 'react-native';
-import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import React, { useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+// 認証フロー（ログイン・新規登録）の画面
+import LoginScreen from './src/screens/LoginScreen';
+import SignUpScreen from './src/screens/SignUpScreen';
+
+// ログイン後のメインアプリのナビゲーター
+import AppNavigator from './src/navigation/AppNavigator';
+
+import type { RootStackParamList } from './src/screens/LoginScreen';
+
+// 認証フロー用のナビゲーター
+const AuthStack = createNativeStackNavigator<RootStackParamList>();
+
+const App = () => {
+  // ★★★ ここが最重要！ ★★★
+  // 本来はユーザーのログイン状態（トークンの有無など）を管理しますが、
+  // 今は開発のために、仮の変数で表示を切り替えます。
+  // この値を false に変えると、ログイン画面が表示されます。
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
+
+  const handleLoginSuccess = () => {
+    setIsLoggedIn(true);
+  };
 
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
-    </SafeAreaProvider>
+    <NavigationContainer>
+      {isLoggedIn ? (
+        // 【ログインしている場合】メインのタブナビゲーションを表示
+        <AppNavigator />
+      ) : (
+        // 【ログインしていない場合】認証用のスタックナビゲーションを表示
+        <AuthStack.Navigator screenOptions={{ headerShown: false }}>
+          <AuthStack.Screen name="Login">
+            {(props) => <LoginScreen {...props} onLoginSuccess={handleLoginSuccess} />}
+          </AuthStack.Screen>
+          <AuthStack.Screen name="SignUp" component={SignUpScreen} />
+        </AuthStack.Navigator>
+      )}
+    </NavigationContainer>
   );
-}
-
-function AppContent(): React.JSX.Element {
-  const safeAreaInsets = useSafeAreaInsets();
-
-  return (
-    <View style={styles.container}>
-      <Text style={styles.text}>
-        This is the App.tsx file.
-      </Text>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  text: {
-    fontSize: 18,
-  }
-});
+};
 
 export default App;
