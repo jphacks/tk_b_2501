@@ -8,6 +8,21 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import datetime
 
+# .envファイルの読み込み
+def load_env_file():
+    """環境変数ファイルを読み込み"""
+    env_file = ".env"
+    if os.path.exists(env_file):
+        with open(env_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    os.environ[key.strip()] = value.strip()
+        print(f"✅ .envファイルを読み込みました: {env_file}")
+    else:
+        print(f"⚠️ .envファイルが見つかりません: {env_file}")
+
 def check_rds_records():
     """RDSデータベースのレコードを確認"""
     database_url = os.getenv("DATABASE_URL")
@@ -94,4 +109,7 @@ def check_rds_records():
         print(f"❌ エラー: {e}")
 
 if __name__ == "__main__":
+    # .envファイルを読み込み
+    load_env_file()
+    # RDSレコードを確認
     check_rds_records()
