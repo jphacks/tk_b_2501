@@ -73,7 +73,7 @@ const SignUpScreen = ({ navigation }: SignUpScreenProps) => {
     <View style={styles.outerContainer}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <Text style={styles.appName}>AppName</Text>
+          <Text style={styles.appName}>GeoPhoto</Text>
         </View>
         <View style={styles.formContainer}>
           <Text style={styles.title}>Sign Up</Text>
