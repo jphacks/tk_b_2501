@@ -109,7 +109,7 @@ async def upload_photo(
     address: Optional[str] = None,
     visibility: VisibilityEnum = VisibilityEnum.private,
     taken_at: Optional[datetime] = None,
-    # current_user: User = Depends(get_current_user),  # テスト用に一時的に無効化
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """写真をアップロード"""
@@ -147,7 +147,7 @@ async def upload_photo(
 
     # データベースに保存
     photo = Photo(
-        user_id=UUID("00000000-0000-0000-0000-000000000000"),  # テスト用のダミーUUID
+        user_id=current_user.id,  # 実際のユーザーID
         s3_key=image_url,  # URLを直接保存
         mime_type=file.content_type or s3_service.get_content_type(
             file.filename),
