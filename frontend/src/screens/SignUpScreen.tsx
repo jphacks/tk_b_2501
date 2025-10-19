@@ -21,6 +21,7 @@ const API_BASE_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http:
 
 const SignUpScreen = ({ navigation }: SignUpScreenProps) => {
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
   // 3. handleSignUpをasync関数に変更します
@@ -36,11 +37,13 @@ const SignUpScreen = ({ navigation }: SignUpScreenProps) => {
       const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
+          'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
         // 5. emailとpasswordをJSON形式の文字列に変換してbodyに含める
         body: JSON.stringify({
           email: email,
+          username: username,
           password: password,
         }),
       });
@@ -82,6 +85,14 @@ const SignUpScreen = ({ navigation }: SignUpScreenProps) => {
             autoCapitalize="none"
             value={email}
             onChangeText={setEmail}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Username"
+            placeholderTextColor="#888"
+            autoCapitalize="none"
+            value={username}
+            onChangeText={setUsername}
           />
           <TextInput
             style={styles.input}

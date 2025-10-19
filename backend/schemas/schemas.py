@@ -6,9 +6,9 @@ from enum import Enum
 
 
 class VisibilityEnum(str, Enum):
-    PRIVATE = "private"
-    UNLISTED = "unlisted"
-    PUBLIC = "public"
+    private = "private"
+    unlisted = "unlisted"
+    public = "public"
 
 
 # User Schemas

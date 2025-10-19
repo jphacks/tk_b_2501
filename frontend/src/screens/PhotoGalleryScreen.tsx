@@ -1,14 +1,17 @@
 // src/screens/PhotoGalleryScreen.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+// 1. FlatList, SafeAreaView, TouchableOpacity などをインポートします
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Dimensions,
+  Dimensions, // 画面のサイズを取得するためにインポート
   Alert,
+  Platform,
+  Image,
   ActivityIndicator,
   Image,
   Modal, // ★ Modal をインポート
@@ -16,7 +19,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/FontAwesome';
-// launchImageLibrary は FAB が無効なため一旦削除
+// 画像ピッカー（ネイティブの画像選択ダイアログを開きます）
+import { launchImageLibrary } from 'react-native-image-picker';
+
+// 3. サービスとフックをインポート
+import photoService, { PhotoResponse } from '../services/photoService';
+import { useImagePicker } from '../hooks/useImagePicker';
 
 const { width } = Dimensions.get('window');
 const ITEM_SIZE = (width - 20) / 2; // アイテムサイズを計算
