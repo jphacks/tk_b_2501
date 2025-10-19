@@ -4,6 +4,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 // 1. react-native-vector-iconsからアイコンコンポーネントをインポートします
 import Icon from 'react-native-vector-icons/FontAwesome';
+import type { RootStackParamList } from '../types/navigation';
 
 // 各画面コンポーネントをインポート
 import PhotoGalleryScreen from '../screens/PhotoGalleryScreen';
@@ -11,7 +12,7 @@ import MapViewScreen from '../screens/MapViewScreen';
 import SharedFeedScreen from '../screens/SharedFeedScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator<RootStackParamList>();
 
 const AppNavigator = () => {
   return (
@@ -19,7 +20,7 @@ const AppNavigator = () => {
       screenOptions={({ route }) => ({
         headerShown: false,
         // 2. tabBarIconオプションをここに追加します
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarIcon: ({ color, size }) => {
           let iconName = 'image'; // デフォルトのアイコン
 
           // 3. 表示しているルート(画面)の名前に応じて、表示するアイコンを切り替えます

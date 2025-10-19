@@ -1,11 +1,13 @@
 // src/screens/MapViewScreen.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 // 1. StyleSheetとSafeAreaViewをインポートします
-import { StyleSheet, View, Text, Image, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // 2. react-native-mapsからMapViewとMarkerをインポートします
 import MapView, { Marker, Region } from 'react-native-maps';
+import { useRoute, RouteProp } from '@react-navigation/native';
+import type { RootStackParamList } from '../types/navigation';
 
 // 3. APIが完成するまでの「ダミーのピンデータ」を作成します
 //    東京の名所の座標をいくつか用意しましょう
@@ -58,21 +60,24 @@ type Nearby_Photos = {
   created_at: string;
 };
 
+type MapViewScreenRouteProp = RouteProp<RootStackParamList, 'Map'>;
+
 const MapViewScreen = () => {
+  const route = useRoute<MapViewScreenRouteProp>();
+  const mapRef = useRef<MapView>(null);
 
   const [markers, setMarkers] = useState<Nearby_Photos[]>([]);
-  const [loading, setLoading] = useState(true);
   const [region, setRegion] = useState<Region>({
-    latitude: 35.6895,
-    longitude: 139.6917,
-    latitudeDelta: 0.1,
-    longitudeDelta: 0.1,
+    latitude: route.params?.latitude || 35.6895,
+    longitude: route.params?.longitude || 139.6917,
+    latitudeDelta: route.params?.latitude ? 0.01 : 0.1,
+    longitudeDelta: route.params?.longitude ? 0.01 : 0.1,
   });
 
   const BACKEND = 'http://localhost:8000';
-  const fetchNearbyPhotos = async (lat: number, lng: number) => {
+  
+  const fetchNearbyPhotos = useCallback(async (lat: number, lng: number) => {
     try {
-      setLoading(true);
       const res = await fetch(
         `${BACKEND}/photos/nearby/photos?lat=${lat}&lng=${lng}`
       );
@@ -81,14 +86,29 @@ const MapViewScreen = () => {
       setMarkers(data);
     } catch (error) {
       console.error('Error fetching markers:', error);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchNearbyPhotos(region.latitude, region.longitude);
-  }, []);
+    const initialLat = route.params?.latitude || 35.6895;
+    const initialLng = route.params?.longitude || 139.6917;
+    
+    fetchNearbyPhotos(initialLat, initialLng);
+    
+    // パラメータで位置が指定されている場合、その位置にアニメーション
+    if (route.params?.latitude && route.params?.longitude && mapRef.current) {
+      setTimeout(() => {
+        if (mapRef.current && route.params?.latitude && route.params?.longitude) {
+          mapRef.current.animateToRegion({
+            latitude: route.params.latitude,
+            longitude: route.params.longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          }, 1000);
+        }
+      }, 500);
+    }
+  }, [route.params, fetchNearbyPhotos]);
 
   const onRegionChangeComplete = async (newRegion: Region) => {
     setRegion(newRegion);
@@ -104,6 +124,7 @@ const MapViewScreen = () => {
 
       {/* 5. MapViewコンポーネントを設置します */}
       <MapView
+        ref={mapRef}
         style={styles.map}
         initialRegion={region}
         onRegionChangeComplete={onRegionChangeComplete}

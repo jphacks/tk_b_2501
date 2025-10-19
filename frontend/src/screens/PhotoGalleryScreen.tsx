@@ -17,10 +17,15 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { useNavigation } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { RootStackParamList } from '../types/navigation';
 
 // 3. サービスとフックをインポート
 import photoService from '../services/photoService';
 import { useImagePicker } from '../hooks/useImagePicker';
+
+type NavigationProp = BottomTabNavigationProp<RootStackParamList, 'Gallery'>;
 
 const { width } = Dimensions.get('window');
 const ITEM_SIZE = (width - 20) / 2; // アイテムサイズを計算
@@ -32,6 +37,8 @@ interface Photo {
   source?: ReturnType<typeof require>; // require() の戻り値の型（ローカル画像の場合）
   uri?: string; // API画像のURL
   createdAt: number; // ソート用の仮のタイムスタンプ (追加日時)
+  lat?: number; // 緯度
+  lng?: number; // 経度
 }
 
 // 型エイリアス（後方互換性のため）
@@ -51,6 +58,9 @@ const SORT_OPTIONS: { key: SortOrder; label: string }[] = [
 ];
 
 const PhotoGalleryScreen = () => {
+  // Navigation hookを使用
+  const navigation = useNavigation<NavigationProp>();
+  
   // 状態変数: 表示する写真リスト、ソート順序、ローディング状態
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [sortOrder, setSortOrder] = useState<SortOrder>('added_desc');
@@ -77,6 +87,8 @@ const PhotoGalleryScreen = () => {
           name: photo.title || '無題',
           uri: photo.s3_key, // S3のURLを直接使用
           createdAt: new Date(photo.created_at).getTime(),
+          lat: photo.lat,
+          lng: photo.lng,
         };
       });
     } catch (error) {
@@ -172,13 +184,63 @@ const PhotoGalleryScreen = () => {
     }
   };
 
+  // 写真をクリックしてMap画面に遷移する関数
+  const handlePhotoPress = (photo: Photo) => {
+    if (photo.lat !== undefined && photo.lng !== undefined) {
+      navigation.navigate('Map', {
+        latitude: photo.lat,
+        longitude: photo.lng,
+        photoId: photo.id,
+        photoTitle: photo.name,
+      });
+    } else {
+      Alert.alert('位置情報なし', 'この写真には位置情報が含まれていません');
+    }
+  };
+
+  // 写真を削除する関数
+  const handleDeletePhoto = async (photoId: string, photoName: string) => {
+    Alert.alert(
+      '写真を削除',
+      `「${photoName}」を削除しますか？`,
+      [
+        {
+          text: 'キャンセル',
+          style: 'cancel',
+        },
+        {
+          text: '削除',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await photoService.deletePhoto(photoId);
+              // 写真を再読み込み
+              await fetchAndSortLocalPhotos(sortOrder);
+              Alert.alert('成功', '写真を削除しました');
+            } catch (error) {
+              console.error('削除エラー:', error);
+              const errorMessage = error instanceof Error ? error.message : '写真の削除に失敗しました';
+              Alert.alert('エラー', errorMessage);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
   // --- FlatList の各写真アイテムをレンダリングする関数 ---
   const renderPhotoItem = ({ item }: { item: Photo }) => {
     // 画像ソースを決定
     const imageSource = item.source ? item.source : { uri: item.uri };
     
     return (
-      <TouchableOpacity style={styles.photoItem}>
+      <TouchableOpacity 
+        style={styles.photoItem}
+        onPress={() => handlePhotoPress(item)}
+        onLongPress={() => handleDeletePhoto(item.id, item.name)}
+        delayLongPress={500}
+      >
         <Image 
           source={imageSource} 
           style={styles.photoImage} 
@@ -191,6 +253,12 @@ const PhotoGalleryScreen = () => {
           }}
         />
         <Text style={styles.photoName} numberOfLines={1}>{item.name}</Text>
+        {/* 位置情報があるかどうかを示すアイコン */}
+        {item.lat !== undefined && item.lng !== undefined && (
+          <View style={styles.locationBadge}>
+            <Icon name="map-marker" size={12} color="white" />
+          </View>
+        )}
       </TouchableOpacity>
     );
   };
@@ -299,9 +367,21 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { marginTop: 10, color: '#666' },
   listContent: { paddingHorizontal: 5, paddingBottom: 80 },
-  photoItem: { width: ITEM_SIZE, margin: 5, alignItems: 'center' },
+  photoItem: { width: ITEM_SIZE, margin: 5, alignItems: 'center', position: 'relative' },
   photoImage: { width: '100%', height: ITEM_SIZE * 1.2, borderRadius: 8, backgroundColor: '#E0E0E0' },
   photoName: { marginTop: 5, color: '#333', fontSize: 12, textAlign: 'center' },
+  locationBadge: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: 'rgba(200, 181, 111, 0.9)',
+    borderRadius: 12,
+    padding: 4,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   emptyContainer: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 50 },
   emptyText: { marginTop: 10, fontSize: 16, color: '#666' },
   emptySubText: { marginTop: 5, fontSize: 12, color: '#999', textAlign: 'center' },
