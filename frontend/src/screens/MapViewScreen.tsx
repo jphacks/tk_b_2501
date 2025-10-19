@@ -6,15 +6,14 @@ import { StyleSheet, View, Text, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // 2. react-native-mapsからMapViewとMarkerをインポートします
 import MapView, { Marker, Region } from 'react-native-maps';
-import { DATABASE_URL } from '@env';
 
 // 3. APIが完成するまでの「ダミーのピンデータ」を作成します
 //    東京の名所の座標をいくつか用意しましょう
 const DUMMY_MARKERS = [
   {
     id: '1',
-    coordinate: { latitude: 35.6586, longitude: 139.7454 },
-    title: '東京タワー',
+    coordinate: { latitude: 35.78384, longitude: 139.86486},
+    title: '東京理科大学 葛飾キャンパス',
     description: 'ここで撮った写真1枚',
     source: require('./../assets/images/code.jpeg'),
   },
@@ -27,10 +26,17 @@ const DUMMY_MARKERS = [
   },
   {
     id: '3',
-    coordinate: { latitude: 35.6812, longitude: 139.7671 },
-    title: '東京駅',
+    coordinate: { latitude: 35.71387, longitude: 139.76295 },
+    title: '東京大学',
     description: 'ここで撮った写真3枚',
     source: require('./../assets/images/東大.jpeg'),
+  },
+  {
+    id: '4',
+    coordinate: { latitude: 35.69998, longitude: 139.74114 },
+    title: '6号館',
+    description: 'ここで撮った写真3枚',
+    source: require('./../assets/images/6号館屋上2.jpeg'),
   },
 ];
 
@@ -63,7 +69,7 @@ const MapViewScreen = () => {
     longitudeDelta: 0.1,
   });
 
-  const BACKEND = DATABASE_URL;
+  const BACKEND = 'http://localhost:8000';
   const fetchNearbyPhotos = async (lat: number, lng: number) => {
     try {
       setLoading(true);
@@ -93,7 +99,7 @@ const MapViewScreen = () => {
     <SafeAreaView style={styles.container}>
       {/* 4. 他の画面と共通のヘッダーを設置します */}
       <View style={styles.header}>
-        <Text style={styles.appName}>AppName</Text>
+        <Text style={styles.appName}>GeoPhoto</Text>
       </View>
 
       {/* 5. MapViewコンポーネントを設置します */}
@@ -110,7 +116,7 @@ const MapViewScreen = () => {
             description={marker.description}>
             <View style={styles.markerContainer}>
               <Image
-            source={require('../assets/images/code.jpeg')}
+            source={marker.source}
             style={styles.markerImage}
             resizeMode="cover"/>
             </View>
