@@ -1,6 +1,52 @@
 # GeoPhoto
+<p align="center">
+  <img src="./slide/Slide1.jpg" width="900">
+</p>
 
 本プロジェクトは、写真を「いつ撮ったか」ではなく「どこで撮ったか」で管理する全く新しい写真アプリ「GeoPhoto」をJPhacks2025向けに開発しました。地図を移動するたびにリアルタイムでそのエリアの写真が表示され、観光地・学校・街角など、場所に特化した写真発見体験を実現します
+
+## ユーザーのターゲット
+
+**【生物・環境系の学生や研究者】**  
+- 現地調査で撮影した生物・植物・地形などの記録を、位置情報付きで整理。
+
+**【フィールドワークを行う技術者や測量担当者】**  
+- 写真と座標を紐づけて現場データを効率的に共有。
+
+**【写真・風景・旅行好きの一般ユーザー】**  
+- 撮影地を地図で振り返ったり、旅の記録を位置ベースで保存。
+
+---
+
+**活用イメージ**
+- 研究現場での「サンプル採取地点の記録管理」  
+- フィールド調査での「位置付き写真ログ」  
+- 趣味写真の「マップギャラリー化（自分専用の撮影地マップ）」
+
+  
+
+<table>
+  <tr>
+    <td><img src="./slide/Slide2.jpg" width="100%"></td>
+    <td><img src="./slide/Slide3.jpg" width="100%"></td>
+  </tr>
+  <tr>
+    <td><img src="./slide/Slide4.jpg" width="100%"></td>
+    <td><img src="./slide/Slide5.jpg" width="100%"></td>
+  </tr>
+  <tr>
+    <td><img src="./slide/Slide6.jpg" width="100%"></td>
+    <td><img src="./slide/Slide7.jpg" width="100%"></td>
+  </tr>
+  <tr>
+    <td><img src="./slide/Slide8.jpg" width="100%"></td>
+    <td><img src="./slide/Slide9.jpg" width="100%"></td>
+  </tr>
+</table>
+
+## デモ動画
+ [デモ動画を見る（YouTube）](https://www.youtube.com/shorts/7-CzCNS0vtg)
+
 
 ## プロジェクト構成
 
@@ -72,17 +118,12 @@ uvicorn main:app --reload
 ## 主要機能
 
 - ユーザー管理API
-- RESTful API設計
 - データベース連携
-- クロスプラットフォーム対応
-
-## ライセンス
-
-このプロジェクトはMITライセンスの下で公開されています。
+- クロスプラットフォーム対応（予定※現在iOS版のみ）
 
 
 
-## 🗄️ ER図（Database Entity Relationship Diagram）
+##  ER図
 
 
 ---
