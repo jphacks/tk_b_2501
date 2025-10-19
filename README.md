@@ -24,7 +24,6 @@ tk_b_2501/
 - **React Native** 0.72.6
 - **TypeScript**
 - **React Navigation**
-- **Axios** (HTTP クライアント)
 
 ### バックエンド
 - **FastAPI** 0.104.1
