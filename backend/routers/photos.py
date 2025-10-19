@@ -107,7 +107,7 @@ async def upload_photo(
     lng: Optional[float] = None,
     accuracy_m: Optional[float] = None,
     address: Optional[str] = None,
-    visibility: VisibilityEnum = VisibilityEnum.PRIVATE,
+    visibility: VisibilityEnum = VisibilityEnum.private,
     taken_at: Optional[datetime] = None,
     # current_user: User = Depends(get_current_user),  # テスト用に一時的に無効化
     db: Session = Depends(get_db)
@@ -186,11 +186,11 @@ async def get_photos(
         query = query.filter(Photo.visibility == visibility)
     elif not current_user:
         # 未認証ユーザーは公開写真のみ
-        query = query.filter(Photo.visibility == VisibilityEnum.PUBLIC)
+        query = query.filter(Photo.visibility == VisibilityEnum.public)
     elif user_id and user_id != current_user.id:
         # 他のユーザーの写真は公開・非公開リストのみ
         query = query.filter(
-            Photo.visibility.in_([VisibilityEnum.PUBLIC, VisibilityEnum.UNLISTED])
+            Photo.visibility.in_([VisibilityEnum.public, VisibilityEnum.unlisted])
         )
     
     # ユーザーIDによるフィルタリング
@@ -227,7 +227,7 @@ async def get_photo(
         )
     
     # アクセス権限チェック
-    if photo.visibility == VisibilityEnum.PRIVATE:
+    if photo.visibility == VisibilityEnum.private:
         if not current_user or photo.user_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -320,14 +320,14 @@ async def get_nearby_photos(
     
     # 公開範囲によるフィルタリング
     if not current_user:
-        query = query.filter(Photo.visibility == VisibilityEnum.PUBLIC)
+        query = query.filter(Photo.visibility == VisibilityEnum.public)
     else:
         query = query.filter(
             or_(
-                Photo.visibility == VisibilityEnum.PUBLIC,
-                Photo.visibility == VisibilityEnum.UNLISTED,
+                Photo.visibility == VisibilityEnum.public,
+                Photo.visibility == VisibilityEnum.unlisted,
                 and_(
-                    Photo.visibility == VisibilityEnum.PRIVATE,
+                    Photo.visibility == VisibilityEnum.private,
                     Photo.user_id == current_user.id
                 )
             )

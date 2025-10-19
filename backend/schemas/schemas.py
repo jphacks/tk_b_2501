@@ -67,7 +67,7 @@ class PhotoBase(BaseModel):
     lng: Optional[float] = Field(None, ge=-180, le=180)
     accuracy_m: Optional[float] = Field(None, ge=0)
     address: Optional[str] = None
-    visibility: VisibilityEnum = VisibilityEnum.PRIVATE
+    visibility: VisibilityEnum = VisibilityEnum.private
     taken_at: Optional[datetime] = None
 
 

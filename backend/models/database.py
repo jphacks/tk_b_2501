@@ -74,7 +74,7 @@ class Photo(Base):
     accuracy_m = Column(Float)
     address = Column(Text)
     exif = Column(JSONB)
-    visibility = Column(SQLEnum(VisibilityEnum), default=VisibilityEnum.PRIVATE, nullable=False)
+    visibility = Column(SQLEnum(VisibilityEnum), default=VisibilityEnum.private, nullable=False)
     taken_at = Column(DateTime(timezone=True))
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     
