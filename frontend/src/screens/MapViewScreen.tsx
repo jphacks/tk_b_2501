@@ -62,7 +62,7 @@ const MapViewScreen = () => {
     longitudeDelta: 0.1,
   });
 
-  const BACKEND = 'http://localhost:8000';
+  const BACKEND = 'http://127.0.0.1:8000';
   const fetchNearbyPhotos = async (lat: number, lng: number) => {
     try {
       setLoading(true);
@@ -123,8 +123,15 @@ const MapViewScreen = () => {
               longitude: marker.lng,
             }}
             title={marker.title}
-            description={marker.description}
-          />
+            description={marker.description}>
+              <View style={styles.markerContainer}>
+              <Image
+            // 6. マーカー画像のソースをS3キーから取得します
+            source={{uri: `${BACKEND}/photos/photo?s3_key=${marker.s3_key}`}}
+            style={styles.markerImage}
+            resizeMode="cover"/>
+              </View>
+          </Marker>
         ))}
       </MapView>
     </SafeAreaView>
