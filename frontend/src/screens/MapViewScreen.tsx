@@ -6,6 +6,7 @@ import { StyleSheet, View, Text, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // 2. react-native-mapsからMapViewとMarkerをインポートします
 import MapView, { Marker, Region } from 'react-native-maps';
+import { DATABASE_URL } from '@env';
 
 // 3. APIが完成するまでの「ダミーのピンデータ」を作成します
 //    東京の名所の座標をいくつか用意しましょう
@@ -62,7 +63,7 @@ const MapViewScreen = () => {
     longitudeDelta: 0.1,
   });
 
-  const BACKEND = 'http://127.0.0.1:8000';
+  const BACKEND = DATABASE_URL;
   const fetchNearbyPhotos = async (lat: number, lng: number) => {
     try {
       setLoading(true);
