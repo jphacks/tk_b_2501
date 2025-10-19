@@ -24,6 +24,7 @@ import type { RootStackParamList } from '../types/navigation';
 // 3. サービスとフックをインポート
 import photoService from '../services/photoService';
 import { useImagePicker } from '../hooks/useImagePicker';
+import PhotoUploadModal, { PhotoUploadFormData } from '../components/PhotoUploadModal';
 
 type NavigationProp = BottomTabNavigationProp<RootStackParamList, 'Gallery'>;
 
@@ -68,6 +69,9 @@ const PhotoGalleryScreen = () => {
   const [uploading, setUploading] = useState(false);
   // --- 2. Modal表示状態を再追加 ---
   const [isModalVisible, setIsModalVisible] = useState(false);
+  // 写真アップロードモーダル
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
   
   // 画像ピッカーフックを使用
   const { showImagePicker } = useImagePicker();
@@ -129,24 +133,48 @@ const PhotoGalleryScreen = () => {
     setLoading(false);
   };
 
-  // 写真をアップロードする関数
-  const handlePhotoUpload = async () => {
+  // 写真を選択する関数
+  const handlePhotoSelect = async () => {
     try {
-      setUploading(true);
       const imageResult = await showImagePicker();
       
       if (imageResult) {
-        console.log('Uploading image:', imageResult.uri);
-        await photoService.uploadPhoto(imageResult.uri, {
-          title: '新しい写真',
-          visibility: 'PUBLIC', // 開発環境ではPUBLICに設定
-          description: 'React Nativeからアップロード',
-        });
-        
-        // 写真を再読み込み
-        await fetchAndSortLocalPhotos(sortOrder);
-        Alert.alert('成功', '写真をアップロードしました');
+        console.log('Selected image:', imageResult.uri);
+        setSelectedImageUri(imageResult.uri);
+        setShowUploadModal(true);
       }
+    } catch (error) {
+      console.error('画像選択エラー:', error);
+      Alert.alert('エラー', '画像の選択に失敗しました');
+    }
+  };
+
+  // 写真をアップロードする関数（モーダルからのデータを受け取る）
+  const handlePhotoUpload = async (formData: PhotoUploadFormData) => {
+    if (!selectedImageUri) {
+      Alert.alert('エラー', '画像が選択されていません');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      console.log('Uploading image with data:', formData);
+      
+      await photoService.uploadPhoto(selectedImageUri, {
+        title: formData.title,
+        description: formData.description,
+        lat: formData.lat,
+        lng: formData.lng,
+        visibility: formData.visibility,
+        taken_at: formData.taken_at,
+      });
+      
+      // 写真を再読み込み
+      await fetchAndSortLocalPhotos(sortOrder);
+      Alert.alert('成功', '写真をアップロードしました');
+      
+      // 状態をリセット
+      setSelectedImageUri(null);
     } catch (error) {
       console.error('アップロードエラー:', error);
       const errorMessage = error instanceof Error ? error.message : '写真のアップロードに失敗しました';
@@ -306,7 +334,7 @@ const PhotoGalleryScreen = () => {
       {/* フローティングアクションボタン（写真追加ボタン） */}
       <TouchableOpacity 
         style={[styles.fab, uploading && styles.fabDisabled]} 
-        onPress={handlePhotoUpload}
+        onPress={handlePhotoSelect}
         disabled={uploading}
       >
         {uploading ? (
@@ -315,6 +343,17 @@ const PhotoGalleryScreen = () => {
           <Icon name="plus" size={24} color="white" />
         )}
       </TouchableOpacity>
+
+      {/* 写真アップロードモーダル */}
+      <PhotoUploadModal
+        visible={showUploadModal}
+        onClose={() => {
+          setShowUploadModal(false);
+          setSelectedImageUri(null);
+        }}
+        onSubmit={handlePhotoUpload}
+        imageUri={selectedImageUri || undefined}
+      />
 
       {/* --- 6. Modalコンポーネントを再追加 --- */}
       <Modal
