@@ -53,8 +53,8 @@ const SignUpScreen = ({ navigation }: SignUpScreenProps) => {
 
       // 7. レスポンスが成功でなかった場合 (例: 400, 500エラー)
       if (!response.ok) {
-        // バックエンドからのエラーメッセージがあれば表示、なければ汎用メッセージ
-        throw new Error(data.message || '登録に失敗しました。');
+        // バックエンドからのエラーメッセージを表示
+        throw new Error(data.detail || '登録に失敗しました。');
       }
 
       // 8. 登録成功！

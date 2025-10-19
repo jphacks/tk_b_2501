@@ -29,11 +29,18 @@ export interface PhotoResponse {
   visibility: string;
   taken_at?: string;
   created_at: string;
-  updated_at: string;
+}
+
+export interface PaginatedPhotoResponse {
+  items: PhotoResponse[];
+  total: number;
+  skip: number;
+  limit: number;
+  has_next: boolean;
 }
 
 class PhotoService {
-  private async getAuthHeaders(): Promise<HeadersInit> {
+  private async getAuthHeaders(): Promise<Record<string, string>> {
     // 実際の実装では、ストレージからトークンを取得
     const token = await this.getStoredToken();
     return {
@@ -62,24 +69,32 @@ class PhotoService {
         name: 'photo.jpg',
       } as any);
 
-      // その他のデータを追加
-      Object.entries(uploadData).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          formData.append(key, String(value));
-        }
-      });
+      // その他のデータをフォームフィールドとして追加
+      if (uploadData.title) formData.append('title', uploadData.title);
+      if (uploadData.description) formData.append('description', uploadData.description);
+      if (uploadData.lat !== undefined) formData.append('lat', String(uploadData.lat));
+      if (uploadData.lng !== undefined) formData.append('lng', String(uploadData.lng));
+      if (uploadData.accuracy_m !== undefined) formData.append('accuracy_m', String(uploadData.accuracy_m));
+      if (uploadData.address) formData.append('address', uploadData.address);
+      if (uploadData.visibility) formData.append('visibility', uploadData.visibility);
+      if (uploadData.taken_at) formData.append('taken_at', uploadData.taken_at);
+
+      // 認証トークンを取得
+      const token = await this.getStoredToken();
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      // multipart/form-dataの場合、Content-Typeは自動設定されるため指定しない
 
       const response = await fetch(`${API_BASE_URL}/photos/upload`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          ...(await this.getAuthHeaders()),
-        },
+        headers,
         body: formData,
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.detail || 'アップロードに失敗しました');
       }
 
@@ -90,13 +105,7 @@ class PhotoService {
     }
   }
 
-  async getPhotos(skip: number = 0, limit: number = 100): Promise<{
-    items: PhotoResponse[];
-    total: number;
-    skip: number;
-    limit: number;
-    has_next: boolean;
-  }> {
+  async getPhotos(skip: number = 0, limit: number = 100): Promise<PaginatedPhotoResponse> {
     try {
       const response = await fetch(
         `${API_BASE_URL}/photos/?skip=${skip}&limit=${limit}`,
