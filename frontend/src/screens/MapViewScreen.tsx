@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 // 1. StyleSheetとSafeAreaViewをインポートします
-import { StyleSheet, View, Text, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // 2. react-native-mapsからMapViewとMarkerをインポートします
 import MapView, { Marker, Region } from 'react-native-maps';
@@ -12,21 +12,31 @@ import MapView, { Marker, Region } from 'react-native-maps';
 const DUMMY_MARKERS = [
   {
     id: '1',
-    coordinate: { latitude: 35.6586, longitude: 139.7454 },
-    title: '東京タワー',
+    coordinate: { latitude: 35.78384, longitude: 139.86486},
+    title: '東京理科大学 葛飾キャンパス',
     description: 'ここで撮った写真1枚',
+    source: require('./../assets/images/code.jpeg'),
   },
   {
     id: '2',
     coordinate: { latitude: 35.7101, longitude: 139.8107 },
     title: '東京スカイツリー',
     description: 'ここで撮った写真2枚',
+    source: require('./../assets/images/kazu.jpeg'),
   },
   {
     id: '3',
-    coordinate: { latitude: 35.6812, longitude: 139.7671 },
-    title: '東京駅',
+    coordinate: { latitude: 35.71387, longitude: 139.76295 },
+    title: '東京大学',
     description: 'ここで撮った写真3枚',
+    source: require('./../assets/images/東大.jpeg'),
+  },
+  {
+    id: '4',
+    coordinate: { latitude: 35.69998, longitude: 139.74114 },
+    title: '6号館',
+    description: 'ここで撮った写真3枚',
+    source: require('./../assets/images/6号館屋上2.jpeg'),
   },
 ];
 
@@ -89,7 +99,7 @@ const MapViewScreen = () => {
     <SafeAreaView style={styles.container}>
       {/* 4. 他の画面と共通のヘッダーを設置します */}
       <View style={styles.header}>
-        <Text style={styles.appName}>AppName</Text>
+        <Text style={styles.appName}>GeoPhoto</Text>
       </View>
 
       {/* 5. MapViewコンポーネントを設置します */}
@@ -98,6 +108,20 @@ const MapViewScreen = () => {
         initialRegion={region}
         onRegionChangeComplete={onRegionChangeComplete}
       >
+        {DUMMY_MARKERS.map((marker)=>(
+          <Marker
+            key={marker.id}
+            coordinate={marker.coordinate}
+            title={marker.title}
+            description={marker.description}>
+            <View style={styles.markerContainer}>
+              <Image
+            source={marker.source}
+            style={styles.markerImage}
+            resizeMode="cover"/>
+            </View>
+          </Marker>
+        ))}
         {markers.map((marker) => (
           <Marker
             key={marker.id}
@@ -106,8 +130,15 @@ const MapViewScreen = () => {
               longitude: marker.lng,
             }}
             title={marker.title}
-            description={marker.description}
-          />
+            description={marker.description}>
+              <View style={styles.markerContainer}>
+              <Image
+            // 6. マーカー画像のソースをS3キーから取得します
+            source={{uri: `${BACKEND}/photos/photo?s3_key=${marker.s3_key}`}}
+            style={styles.markerImage}
+            resizeMode="cover"/>
+              </View>
+          </Marker>
         ))}
       </MapView>
     </SafeAreaView>
@@ -133,6 +164,19 @@ const styles = StyleSheet.create({
   map: {
     // 地図がヘッダー以外の全てのスペースを埋めるようにします
     flex: 1,
+  },
+  markerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 50,
+    height: 50,
+  },
+  markerImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: 'white',
   },
 });
 
