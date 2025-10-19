@@ -9,9 +9,9 @@ from database import Base
 
 
 class VisibilityEnum(enum.Enum):
-    PRIVATE = "private"
-    UNLISTED = "unlisted"
-    PUBLIC = "public"
+    private = "private"
+    unlisted = "unlisted"
+    public = "public"
 
 
 class User(Base):

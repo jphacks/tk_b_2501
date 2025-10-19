@@ -42,9 +42,9 @@ const SignUpScreen = ({ navigation }: SignUpScreenProps) => {
         },
         // 5. emailとpasswordをJSON形式の文字列に変換してbodyに含める
         body: JSON.stringify({
-          email,
-          username,
-          password,
+          email: email,
+          username: username,
+          password: password,
         }),
       });
 
@@ -90,7 +90,6 @@ const SignUpScreen = ({ navigation }: SignUpScreenProps) => {
             style={styles.input}
             placeholder="Username"
             placeholderTextColor="#888"
-            keyboardType="default"
             autoCapitalize="none"
             value={username}
             onChangeText={setUsername}

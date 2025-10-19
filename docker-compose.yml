@@ -32,6 +32,10 @@ services:
       - DATABASE_URL=postgresql://user:password@db:5432/mobileapp
       - SECRET_KEY=dev-secret-key-change-in-production
       - DEBUG=True
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION:-ap-northeast-1}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
     depends_on:
       db:
         condition: service_healthy
