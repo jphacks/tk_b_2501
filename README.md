@@ -46,6 +46,8 @@
 
 ## デモ動画
  [デモ動画を見る（YouTube）](https://www.youtube.com/shorts/7-CzCNS0vtg)
+## 発表スライド 
+ ./JPhacks_tkb_2501 (1).pdf
 
 
 ## プロジェクト構成
