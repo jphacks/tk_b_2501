@@ -37,6 +37,7 @@ const SignUpScreen = ({ navigation }: SignUpScreenProps) => {
       const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
+          'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
         // 5. emailとpasswordをJSON形式の文字列に変換してbodyに含める
