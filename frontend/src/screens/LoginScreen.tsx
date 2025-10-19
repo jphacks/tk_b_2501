@@ -39,30 +39,27 @@ const LoginScreen = ({ navigation, onLoginSuccess }: LoginScreenProps) => {
     }
 
     try {
-      // 4. fetchを使用して、バックエンドの /auth/login エンドポイントにPOSTリクエストを送信
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email,
-          password: password,
-        }),
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        // バックエンドからのエラーメッセージがあれば表示
-        throw new Error(data.message || 'ログインに失敗しました。');
+        // バックエンドからのエラーメッセージを表示
+        throw new Error(data.detail || 'ログインに失敗しました。');
       }
 
-      // 5. ログイン成功！
-      //    将来的には、ここで受け取ったトークンを保存し、メイン画面に遷移します。
+      // 5. ログイン成功！トークンを保存
+      //    将来的には、AsyncStorageなどでトークンを保存します
       console.log('ログイン成功:', data);
+      // data.access_token と data.refresh_token を保存する処理を追加
       onLoginSuccess();
-      // 例: navigation.replace('MainApp'); // MainAppは後で作成するメイン画面のナビゲーター
 
     } catch (error: any) {
       // 6. エラーをキャッチして表示

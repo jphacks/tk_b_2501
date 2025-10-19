@@ -29,7 +29,7 @@ class UserLogin(BaseModel):
 class UserResponse(UserBase):
     id: UUID
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -54,7 +54,7 @@ class SessionResponse(BaseModel):
     issued_at: datetime
     expires_at: datetime
     revoked_at: Optional[datetime]
-    
+
     class Config:
         from_attributes = True
 
@@ -93,7 +93,7 @@ class PhotoResponse(PhotoBase):
     size_bytes: int
     exif: Optional[Dict[str, Any]]
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 

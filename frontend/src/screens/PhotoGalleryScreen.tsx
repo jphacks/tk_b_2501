@@ -1,4 +1,3 @@
-/* 写真一覧画面 */
 // src/screens/PhotoGalleryScreen.tsx
 
 import React, { useState, useEffect } from 'react';
@@ -10,232 +9,270 @@ import {
   FlatList,
   TouchableOpacity,
   Dimensions, // 画面のサイズを取得するためにインポート
-  Image,
   Alert,
+  Platform,
+  Image,
   ActivityIndicator,
+  Modal, // ★ Modal をインポート
+  Pressable, // ★ Pressable をインポート (モーダルの背景タップ用)
 } from 'react-native';
-// 2. アイコンも使えるようにインポートしておきます
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/FontAwesome';
+// 画像ピッカー（ネイティブの画像選択ダイアログを開きます）
+import { launchImageLibrary } from 'react-native-image-picker';
 
 // 3. サービスとフックをインポート
 import photoService, { PhotoResponse } from '../services/photoService';
 import { useImagePicker } from '../hooks/useImagePicker';
 
-// 画面の横幅を取得し、2で割って写真アイテムのサイズを計算
 const { width } = Dimensions.get('window');
-const ITEM_SIZE = (width - 20) / 2; // (画面幅 - 左右の余白) / 2列
+const ITEM_SIZE = (width - 20) / 2; // アイテムサイズを計算
+
+// ローカル画像データ構造
+interface LocalPhoto {
+  id: string;
+  name: string; // 画像の名前
+  source: ReturnType<typeof require>; // require() の戻り値の型
+  createdAt: number; // ソート用の仮のタイムスタンプ (追加日時)
+}
+
+// ローカル画像データ (ここは変更なし)
+const LOCAL_PHOTOS_DATA: LocalPhoto[] = [
+  { id: '1', name: 'Code', source: require('./../assets/images/code.jpeg'), createdAt: 1729236000000 },
+  { id: '2', name: 'Kazu', source: require('./../assets/images/kazu.jpeg'), createdAt: 1729236120000 },
+  { id: '3', name: 'Nabeshima', source: require('./../assets/images/nabeshima.jpeg'), createdAt: 1729235880000 },
+  { id: '4', name: 'スクショ', source: require('./../assets/images/スクショ.png'), createdAt: 1729236180000 },
+  { id: '5', name: '小テスト', source: require('./../assets/images/小テスト.jpeg'), createdAt: 1729236240000 },
+  { id: '6', name: '東大', source: require('./../assets/images/東大.jpeg'), createdAt: 1729236300000 },
+  { id: '7', name: '6号館屋上', source: require('./../assets/images/6号館屋上.jpeg') , createdAt: 1729236360000 },
+  { id: '8', name: '6号館屋上2', source: require('./../assets/images/6号館屋上2.jpeg') , createdAt: 1729236420000 },
+  { id: '9', name: 'Murakami', source: require('./../assets/images/murakami.jpeg') , createdAt: 1729236480000 },
+  { id: '10', name: 'Murakami 2', source: require('./../assets/images/murakami2.jpeg') , createdAt: 1729236540000 },
+  { id: '11', name: '一号館', source: require('./../assets/images/一号館.jpeg') , createdAt: 1729236600000 },
+  // { id: '12', name: '学祭 TUS', source: require('./../assets/images/学祭.TUS.JPG') ,createdAt: 1729236660000 }, // エラーが出た行はコメントアウトのまま
+  // { id: '13', name: '時間割', source: require('./../assets/images/時間割.PNG') ,createdAt: 1729236720000 }, // エラーが出た行はコメントアウトのまま
+];
+
+// ソート順序の型定義 (変更なし)
+type SortOrder = 'added_desc' | 'added_asc' | 'random';
+
+// --- 1. ソートオプションを定義 ---
+const SORT_OPTIONS: { key: SortOrder; label: string }[] = [
+  { key: 'added_desc', label: '追加日が新しい順' },
+  { key: 'added_asc', label: '追加日が古い順' },
+  { key: 'random', label: 'ランダム' },
+];
 
 const PhotoGalleryScreen = () => {
-  const [photos, setPhotos] = useState<PhotoResponse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const { showImagePicker } = useImagePicker();
+  // 状態変数: 表示する写真リスト、ソート順序、ローディング状態
+  const [photos, setPhotos] = useState<LocalPhoto[]>([]);
+  const [sortOrder, setSortOrder] = useState<SortOrder>('added_desc');
+  const [loading, setLoading] = useState(false);
+  // --- 2. Modal表示状態を再追加 ---
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
-  // 写真一覧を取得
-  const loadPhotos = async () => {
-    try {
-      setLoading(true);
-      const response = await photoService.getPhotos();
-      setPhotos(response.items);
-    } catch (error) {
-      console.error('写真の読み込みエラー:', error);
-      Alert.alert('エラー', '写真の読み込みに失敗しました');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 写真をアップロード
-  const handlePhotoUpload = async () => {
-    try {
-      setUploading(true);
-      const imageResult = await showImagePicker();
-      
-      if (imageResult) {
-        const uploadedPhoto = await photoService.uploadPhoto(imageResult.uri, {
-          title: '新しい写真',
-          visibility: 'PRIVATE',
-        });
-        
-        // 写真一覧を更新
-        setPhotos(prev => [uploadedPhoto, ...prev]);
-        Alert.alert('成功', '写真をアップロードしました');
+  // ソート関数 (変更なし)
+  const fetchAndSortLocalPhotos = async (currentSortOrder: SortOrder) => {
+    setLoading(true);
+    console.log(`Sorting local photos: ${currentSortOrder}`);
+    await new Promise(resolve => setTimeout(() => resolve(undefined), 50));
+    let sortedPhotos: LocalPhoto[];
+    if (currentSortOrder === 'random') {
+      sortedPhotos = [...LOCAL_PHOTOS_DATA];
+      for (let i = sortedPhotos.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [sortedPhotos[i], sortedPhotos[j]] = [sortedPhotos[j], sortedPhotos[i]];
       }
-    } catch (error) {
-      console.error('アップロードエラー:', error);
-      Alert.alert('エラー', '写真のアップロードに失敗しました');
-    } finally {
-      setUploading(false);
+    } else {
+      sortedPhotos = [...LOCAL_PHOTOS_DATA].sort((a, b) => {
+        if (currentSortOrder === 'added_asc') {
+          return a.createdAt - b.createdAt;
+        } else {
+          return b.createdAt - a.createdAt;
+        }
+      });
     }
+    setPhotos(sortedPhotos);
+    setLoading(false);
   };
 
   useEffect(() => {
-    loadPhotos();
-  }, []);
+    fetchAndSortLocalPhotos(sortOrder);
+  }, [sortOrder]);
 
-  // 4. 写真アイテムをレンダリングするための関数
-  const renderPhotoItem = ({ item }: { item: PhotoResponse }) => (
-    <TouchableOpacity style={styles.photoItem}>
-      <Image 
-        source={{ uri: item.s3_key }} 
-        style={styles.photoImage}
-        resizeMode="cover"
-      />
-      <Text style={styles.photoName} numberOfLines={1}>
-        {item.title || '無題'}
-      </Text>
-    </TouchableOpacity>
+  // --- 4. 現在のソート順のラベルを取得する関数を再追加 ---
+  const getCurrentSortLabel = () => {
+    return SORT_OPTIONS.find(option => option.key === sortOrder)?.label || '表示順序';
+  };
+
+  // --- 5. ソートオプション選択時の処理を再追加 ---
+  // --- ソートオプション選択時の処理を変更 ---
+  const handleSortSelect = (selectedSortKey: SortOrder) => {
+    setIsModalVisible(false); // 先にモーダルを閉じる
+
+    if (selectedSortKey === 'random') {
+      // ★ ランダムが選択された場合 ★
+      // sortOrder が既に 'random' であっても、強制的に再シャッフルを実行
+      fetchAndSortLocalPhotos('random');
+      // 状態も 'random' に設定（既に 'random' でも問題ない）
+      setSortOrder('random');
+    } else {
+      // ★ ランダム以外が選択された場合 ★
+      // 通常通り sortOrder を更新する (useEffect がソートを実行する)
+      setSortOrder(selectedSortKey);
+    }
+  };
+
+  // --- FlatList の各写真アイテムをレンダリングする関数 (変更なし) ---
+  const renderPhotoItem = ({ item }: { item: LocalPhoto }) => (
+    <View style={styles.photoItem}>
+      <Image source={item.source} style={styles.photoImage} resizeMode="cover"/>
+      <Text style={styles.photoName} numberOfLines={1}>{item.name}</Text>
+    </View>
   );
 
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#C8B56F" />
-          <Text style={styles.loadingText}>写真を読み込み中...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   return (
-    // SafeAreaViewでノッチなどを避けます
     <SafeAreaView style={styles.container}>
-      {/* 1. ヘッダー部分 */}
+      {/* ヘッダー */}
       <View style={styles.header}>
         <Text style={styles.appName}>AppName</Text>
       </View>
 
-      {/* 2. ソート順序のドロップダウン（今は見た目だけ） */}
-      <View style={styles.sortContainer}>
-        <Text style={styles.sortText}>表示順序</Text>
-        <Icon name="chevron-down" size={12} color="#555" />
-      </View>
-
-      {/* 3. 写真グリッド部分 */}
-      <FlatList
-        data={photos}
-        renderItem={renderPhotoItem}
-        keyExtractor={item => item.id}
-        numColumns={2} // これで2列のグリッドになります
-        contentContainerStyle={styles.listContent}
-        refreshing={loading}
-        onRefresh={loadPhotos}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Icon name="image" size={50} color="#CCCCCC" />
-            <Text style={styles.emptyText}>写真がありません</Text>
-            <Text style={styles.emptySubText}>+ボタンから写真を追加してください</Text>
-          </View>
-        }
-      />
-
-      {/* 4. フローティングアクションボタン（写真追加ボタン） */}
-      <TouchableOpacity 
-        style={[styles.fab, uploading && styles.fabDisabled]} 
-        onPress={handlePhotoUpload}
-        disabled={uploading}
+      {/* --- 3. ソートボタン: タップでモーダルを開くように再変更 --- */}
+      <TouchableOpacity
+        style={styles.sortContainer}
+        onPress={() => setIsModalVisible(true)} // モーダルを開く
+        disabled={loading}
       >
-        {uploading ? (
-          <ActivityIndicator size="small" color="white" />
-        ) : (
-          <Icon name="plus" size={24} color="white" />
-        )}
+        <Text style={styles.sortText}>{getCurrentSortLabel()}</Text> {/* 現在のソート順を表示 */}
+        <Icon name="chevron-down" size={12} color="#555" />
       </TouchableOpacity>
+
+      {/* ローディング表示または写真リスト */}
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#C8B56F" />
+        </View>
+      ) : (
+        <FlatList
+          data={photos}
+          renderItem={renderPhotoItem}
+          keyExtractor={item => item.id}
+          numColumns={2}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+               <Icon name="image" size={50} color="#CCCCCC" />
+               <Text style={styles.emptyText}>写真がありません</Text>
+               <Text style={styles.emptySubText}>src/assets/images/ に画像を追加してください</Text>
+             </View>
+          }
+        />
+      )}
+
+      {/* FABは削除済み */}
+
+      {/* --- 6. Modalコンポーネントを再追加 --- */}
+      <Modal
+        animationType="fade" // アニメーションの種類
+        transparent={true}    // 背景を透過
+        visible={isModalVisible} // 表示状態
+        onRequestClose={() => setIsModalVisible(false)} // 閉じるリクエスト
+      >
+        {/* モーダルの背景 */}
+        <Pressable style={styles.modalOverlay} onPress={() => setIsModalVisible(false)}>
+          {/* モーダルのコンテンツ */}
+          <Pressable style={styles.modalContent} onPress={() => {}}>
+            <Text style={styles.modalTitle}>表示順序</Text>
+            {/* ソートオプションのリスト */}
+            {SORT_OPTIONS.map((option) => (
+              <TouchableOpacity
+                key={option.key}
+                style={[
+                  styles.modalOption,
+                  sortOrder === option.key && styles.modalOptionSelected // 選択中のスタイル
+                ]}
+                onPress={() => handleSortSelect(option.key)} // 選択時の処理
+              >
+                <Text style={[
+                  styles.modalOptionText,
+                  sortOrder === option.key && styles.modalOptionTextSelected // 選択中のテキストスタイル
+                ]}>
+                  {option.label}
+                </Text>
+                {/* チェックマーク */}
+                {sortOrder === option.key && (
+                  <Icon name="check" size={16} color="#C8B56F" />
+                )}
+              </TouchableOpacity>
+            ))}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 };
 
-// 5. 新しいスタイルを追加・変更します
+// --- スタイル定義 (モーダル関連のスタイルを再追加) ---
 const styles = StyleSheet.create({
-  container: {
+  container: { flex: 1, backgroundColor: '#F5F5F5' },
+  header: { backgroundColor: 'black', paddingVertical: 15, alignItems: 'center' },
+  appName: { color: 'white', fontSize: 20, fontWeight: 'bold' },
+  sortContainer: { flexDirection: 'row', alignItems: 'center', padding: 10, justifyContent: 'flex-end', backgroundColor: '#EAEAEA', borderBottomWidth: 1, borderBottomColor: '#DDD' },
+  sortText: { marginRight: 5, color: '#555' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  listContent: { paddingHorizontal: 5, paddingBottom: 20 },
+  photoItem: { width: ITEM_SIZE, margin: 5, alignItems: 'center' },
+  photoImage: { width: '100%', height: ITEM_SIZE * 1.2, borderRadius: 8, backgroundColor: '#E0E0E0' },
+  photoName: { marginTop: 5, color: '#333', fontSize: 12, textAlign: 'center' },
+  emptyContainer: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 50 },
+  emptyText: { marginTop: 10, fontSize: 16, color: '#666' },
+  emptySubText: { marginTop: 5, fontSize: 12, color: '#999', textAlign: 'center' },
+  // FABのスタイルは削除
+
+  // --- モーダル用のスタイル (再追加) ---
+  modalOverlay: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
-  },
-  header: {
-    backgroundColor: 'black',
-    paddingVertical: 15,
-    alignItems: 'center',
-  },
-  appName: {
-    color: 'white',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  sortContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    justifyContent: 'flex-end',
-    backgroundColor: '#EAEAEA',
-  },
-  sortText: {
-    marginRight: 5,
-    color: '#555',
-  },
-  listContent: {
-    paddingHorizontal: 5, // 左右の少しの余白
-  },
-  photoItem: {
-    width: ITEM_SIZE,
-    margin: 5,
-    alignItems: 'center',
-  },
-  photoImage: {
-    width: '100%',
-    height: ITEM_SIZE * 1.2, // 少し縦長の写真にする
-    borderRadius: 8,
-    backgroundColor: '#CCCCCC', // 読み込み中の色
-  },
-  photoName: {
-    marginTop: 5,
-    color: '#333',
-    fontSize: 12,
-  },
-  fab: {
-    position: 'absolute',
-    right: 30,
-    bottom: 30,
-    backgroundColor: '#C8B56F',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 8, // Android用の影
-    shadowColor: '#000', // iOS用の影
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    width: '80%',
+    maxHeight: '60%',
+    elevation: 5,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
-  fabDisabled: {
-    backgroundColor: '#CCCCCC',
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  modalOption: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEE',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  loadingText: {
-    marginTop: 10,
-    color: '#666',
+  modalOptionSelected: {
+    // backgroundColor: '#F0EAD6', // 必要なら選択中の背景色を追加
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 50,
-  },
-  emptyText: {
-    marginTop: 10,
+  modalOptionText: {
     fontSize: 16,
-    color: '#666',
+    color: '#333',
   },
-  emptySubText: {
-    marginTop: 5,
-    fontSize: 12,
-    color: '#999',
+   modalOptionTextSelected: {
+    color: '#C8B56F',
+    fontWeight: 'bold',
   },
 });
 

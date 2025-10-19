@@ -43,7 +43,7 @@ class PhotoService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="S3設定が正しくありません"
             )
-        
+
         # ファイル拡張子を取得
         file_extension = file.filename.split('.')[-1].lower()
         if file_extension not in ['jpg', 'jpeg', 'png', 'gif', 'webp']:
@@ -51,15 +51,15 @@ class PhotoService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="サポートされていないファイル形式です"
             )
-        
+
         # S3キーを生成
         s3_key = f"photos/{user_id}/{UUID().hex}.{file_extension}"
-        
+
         # ファイルサイズを取得
         file_content = file.file.read()
         file_size = len(file_content)
         file.file.seek(0)  # ファイルポインタをリセット
-        
+
         # S3にアップロード
         try:
             s3_client.put_object(
@@ -73,26 +73,26 @@ class PhotoService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"ファイルのアップロードに失敗しました: {str(e)}"
             )
-        
+
         return s3_key, file.content_type, file_size
-    
+
     @staticmethod
     def extract_exif_data(file: UploadFile) -> Optional[dict]:
         """EXIFデータを抽出"""
         try:
             image = Image.open(file.file)
             exif_data = image._getexif()
-            
+
             if not exif_data:
                 return None
-            
+
             # EXIFタグを読み取り
             exif_dict = {}
             for tag_id, value in exif_data.items():
                 tag = image.getexif().get(tag_id)
                 if tag:
                     exif_dict[str(tag_id)] = str(value)
-            
+
             return exif_dict
         except Exception:
             return None
@@ -120,7 +120,7 @@ async def upload_photo(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="サポートされていないファイル形式です"
         )
-    
+
     # ファイルサイズチェック（5MB制限）
     file_content = await file.read()
     if len(file_content) > 5 * 1024 * 1024:  # 5MB
@@ -128,12 +128,12 @@ async def upload_photo(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="ファイルサイズが大きすぎます（最大5MB）"
         )
-    
+
     # S3にアップロード
     try:
         image_url = await s3_service.upload_image(
-            file_content, 
-            file.filename, 
+            file_content,
+            file.filename,
             file.content_type or s3_service.get_content_type(file.filename)
         )
     except Exception as e:
@@ -141,15 +141,16 @@ async def upload_photo(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"ファイルのアップロードに失敗しました: {str(e)}"
         )
-    
+
     # EXIFデータを抽出
     exif_data = PhotoService.extract_exif_data(file)
-    
+
     # データベースに保存
     photo = Photo(
         user_id=UUID("00000000-0000-0000-0000-000000000000"),  # テスト用のダミーUUID
         s3_key=image_url,  # URLを直接保存
-        mime_type=file.content_type or s3_service.get_content_type(file.filename),
+        mime_type=file.content_type or s3_service.get_content_type(
+            file.filename),
         size_bytes=len(file_content),
         title=title,
         description=description,
@@ -161,11 +162,11 @@ async def upload_photo(
         visibility=visibility,
         taken_at=taken_at
     )
-    
+
     db.add(photo)
     db.commit()
     db.refresh(photo)
-    
+
     return photo
 
 
@@ -180,7 +181,7 @@ async def get_photos(
 ):
     """写真一覧を取得"""
     query = db.query(Photo)
-    
+
     # 公開範囲によるフィルタリング
     if visibility:
         query = query.filter(Photo.visibility == visibility)
@@ -190,19 +191,23 @@ async def get_photos(
     elif user_id and user_id != current_user.id:
         # 他のユーザーの写真は公開・非公開リストのみ
         query = query.filter(
-            Photo.visibility.in_([VisibilityEnum.public, VisibilityEnum.unlisted])
+
+
+            Photo.visibility.in_(
+                [VisibilityEnum.public, VisibilityEnum.unlisted])
         )
-    
+
     # ユーザーIDによるフィルタリング
     if user_id:
         query = query.filter(Photo.user_id == user_id)
-    
+
     # 総数を取得
     total = query.count()
-    
+
     # ページネーション
-    photos = query.order_by(Photo.created_at.desc()).offset(skip).limit(limit).all()
-    
+    photos = query.order_by(Photo.created_at.desc()).offset(
+        skip).limit(limit).all()
+
     return PaginatedResponse(
         items=photos,
         total=total,
@@ -225,7 +230,7 @@ async def get_photo(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="写真が見つかりません"
         )
-    
+
     # アクセス権限チェック
     if photo.visibility == VisibilityEnum.private:
         if not current_user or photo.user_id != current_user.id:
@@ -233,7 +238,7 @@ async def get_photo(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="この写真にアクセスする権限がありません"
             )
-    
+
     return photo
 
 
@@ -249,13 +254,13 @@ async def update_photo(
         Photo.id == photo_id,
         Photo.user_id == current_user.id
     ).first()
-    
+
     if not photo:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="写真が見つかりません"
         )
-    
+
     # 更新
     if photo_update.title is not None:
         photo.title = photo_update.title
@@ -265,10 +270,10 @@ async def update_photo(
         photo.visibility = photo_update.visibility
     if photo_update.address is not None:
         photo.address = photo_update.address
-    
+
     db.commit()
     db.refresh(photo)
-    
+
     return photo
 
 
@@ -283,23 +288,23 @@ async def delete_photo(
         Photo.id == photo_id,
         Photo.user_id == current_user.id
     ).first()
-    
+
     if not photo:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="写真が見つかりません"
         )
-    
+
     # S3からファイルを削除
     try:
         await s3_service.delete_image(photo.s3_key)
     except Exception:
         pass  # S3削除に失敗してもDBからは削除する
-    
+
     # データベースから削除
     db.delete(photo)
     db.commit()
-    
+
     return {"message": "写真を削除しました"}
 
 
@@ -317,7 +322,7 @@ async def get_nearby_photos(
     query = db.query(Photo).filter(
         Photo.location.isnot(None)
     )
-    
+
     # 公開範囲によるフィルタリング
     if not current_user:
         query = query.filter(Photo.visibility == VisibilityEnum.public)
@@ -332,7 +337,7 @@ async def get_nearby_photos(
                 )
             )
         )
-    
+
     # 位置によるフィルタリング（PostGISのST_DWithinを使用）
     query = query.filter(
         func.ST_DWithin(
@@ -341,7 +346,7 @@ async def get_nearby_photos(
             radius_km * 1000  # メートルに変換
         )
     )
-    
+
     photos = query.order_by(Photo.created_at.desc()).limit(limit).all()
-    
+
     return photos
