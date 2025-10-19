@@ -1,6 +1,6 @@
 // src/screens/PhotoGalleryScreen.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 // 1. FlatList, SafeAreaView, TouchableOpacity などをインポートします
 import {
   View,
@@ -13,7 +13,6 @@ import {
   Platform,
   Image,
   ActivityIndicator,
-  Image,
   Modal, // ★ Modal をインポート
   Pressable, // ★ Pressable をインポート (モーダルの背景タップ用)
 } from 'react-native';
