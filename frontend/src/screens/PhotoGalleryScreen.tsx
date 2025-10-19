@@ -212,7 +212,7 @@ const PhotoGalleryScreen = () => {
     <SafeAreaView style={styles.container}>
       {/* ヘッダー */}
       <View style={styles.header}>
-        <Text style={styles.appName}>AppName</Text>
+        <Text style={styles.appName}>GeoPhoto</Text>
       </View>
 
       {/* --- 3. ソートボタン: タップでモーダルを開くように再変更 --- */}
