@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, validator
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from datetime import datetime
 from uuid import UUID
 from enum import Enum
@@ -123,7 +123,7 @@ class PaginationParams(BaseModel):
 
 
 class PaginatedResponse(BaseModel):
-    items: list
+    items: List[PhotoResponse]
     total: int
     skip: int
     limit: int
