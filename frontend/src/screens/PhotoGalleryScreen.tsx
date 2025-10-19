@@ -1,7 +1,7 @@
 /* 写真一覧画面 */
 // src/screens/PhotoGalleryScreen.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 // 1. FlatList, SafeAreaView, TouchableOpacity などをインポートします
 import {
   View,
@@ -10,16 +10,13 @@ import {
   FlatList,
   TouchableOpacity,
   Dimensions, // 画面のサイズを取得するためにインポート
-  Alert,
-  Platform,
   Image,
+  Alert,
   ActivityIndicator,
 } from 'react-native';
 // 2. アイコンも使えるようにインポートしておきます
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/FontAwesome';
-// 画像ピッカー（ネイティブの画像選択ダイアログを開きます）
-import { launchImageLibrary } from 'react-native-image-picker';
 
 // 3. サービスとフックをインポート
 import photoService, { PhotoResponse } from '../services/photoService';
