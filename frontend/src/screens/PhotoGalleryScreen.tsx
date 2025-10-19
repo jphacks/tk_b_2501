@@ -80,12 +80,18 @@ const PhotoGalleryScreen = () => {
   const loadPhotosFromAPI = async (): Promise<Photo[]> => {
     try {
       const response = await photoService.getPhotos(0, 100);
-      return response.items.map(photo => ({
-        id: photo.id,
-        name: photo.title || '無題',
-        uri: `http://localhost:8000/photos/${photo.id}/file`,
-        createdAt: new Date(photo.created_at).getTime(),
-      }));
+      console.log('Fetched photos from API:', response.items.length);
+      
+      return response.items.map(photo => {
+        // s3_keyには既にS3のフルURLが入っている
+        console.log('Photo:', photo.id, 'URL:', photo.s3_key);
+        return {
+          id: photo.id,
+          name: photo.title || '無題',
+          uri: photo.s3_key, // S3のURLを直接使用
+          createdAt: new Date(photo.created_at).getTime(),
+        };
+      });
     } catch (error) {
       console.error('Failed to fetch photos from API:', error);
       return [];
@@ -180,16 +186,27 @@ const PhotoGalleryScreen = () => {
   };
 
   // --- FlatList の各写真アイテムをレンダリングする関数 ---
-  const renderPhotoItem = ({ item }: { item: Photo }) => (
-    <TouchableOpacity style={styles.photoItem}>
-      <Image 
-        source={item.source ? item.source : { uri: item.uri }} 
-        style={styles.photoImage} 
-        resizeMode="cover"
-      />
-      <Text style={styles.photoName} numberOfLines={1}>{item.name}</Text>
-    </TouchableOpacity>
-  );
+  const renderPhotoItem = ({ item }: { item: Photo }) => {
+    // 画像ソースを決定
+    const imageSource = item.source ? item.source : { uri: item.uri };
+    
+    return (
+      <TouchableOpacity style={styles.photoItem}>
+        <Image 
+          source={imageSource} 
+          style={styles.photoImage} 
+          resizeMode="cover"
+          onError={(error) => {
+            console.error('Image load error for', item.name, ':', error.nativeEvent.error);
+          }}
+          onLoad={() => {
+            console.log('Image loaded successfully:', item.name);
+          }}
+        />
+        <Text style={styles.photoName} numberOfLines={1}>{item.name}</Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>

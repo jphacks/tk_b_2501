@@ -206,6 +206,11 @@ async def get_photos(
     photos = query.order_by(Photo.created_at.desc()).offset(
         skip).limit(limit).all()
 
+    # 各写真のs3_keyを署名付きURLに変換
+    for photo in photos:
+        if photo.s3_key:
+            photo.s3_key = s3_service.get_presigned_url(photo.s3_key)
+
     return PaginatedResponse(
         items=photos,
         total=total,
