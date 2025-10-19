@@ -191,8 +191,6 @@ async def get_photos(
     elif user_id and user_id != current_user.id:
         # 他のユーザーの写真は公開・非公開リストのみ
         query = query.filter(
-
-
             Photo.visibility.in_(
                 [VisibilityEnum.public, VisibilityEnum.unlisted])
         )
