@@ -75,7 +75,7 @@ tk_b_2501/
 - **FastAPI** 0.104.1
 - **SQLAlchemy** (ORM)
 - **PostgreSQL** (データベース)
-- **Pydantic** (データ検証)
+
 
 ### インフラ
 - **Docker** & **Docker Compose**
