@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 // 1. StyleSheetとSafeAreaViewをインポートします
-import { StyleSheet, View, Text, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // 2. react-native-mapsからMapViewとMarkerをインポートします
 import MapView, { Marker, Region } from 'react-native-maps';
@@ -15,18 +15,21 @@ const DUMMY_MARKERS = [
     coordinate: { latitude: 35.6586, longitude: 139.7454 },
     title: '東京タワー',
     description: 'ここで撮った写真1枚',
+    source: require('./../assets/images/code.jpeg'),
   },
   {
     id: '2',
     coordinate: { latitude: 35.7101, longitude: 139.8107 },
     title: '東京スカイツリー',
     description: 'ここで撮った写真2枚',
+    source: require('./../assets/images/kazu.jpeg'),
   },
   {
     id: '3',
     coordinate: { latitude: 35.6812, longitude: 139.7671 },
     title: '東京駅',
     description: 'ここで撮った写真3枚',
+    source: require('./../assets/images/東大.jpeg'),
   },
 ];
 
@@ -98,6 +101,20 @@ const MapViewScreen = () => {
         initialRegion={region}
         onRegionChangeComplete={onRegionChangeComplete}
       >
+        {DUMMY_MARKERS.map((marker)=>(
+          <Marker
+            key={marker.id}
+            coordinate={marker.coordinate}
+            title={marker.title}
+            description={marker.description}>
+            <View style={styles.markerContainer}>
+              <Image
+            source={require('../assets/images/code.jpeg')}
+            style={styles.markerImage}
+            resizeMode="cover"/>
+            </View>
+          </Marker>
+        ))}
         {markers.map((marker) => (
           <Marker
             key={marker.id}
@@ -133,6 +150,19 @@ const styles = StyleSheet.create({
   map: {
     // 地図がヘッダー以外の全てのスペースを埋めるようにします
     flex: 1,
+  },
+  markerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 50,
+    height: 50,
+  },
+  markerImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: 'white',
   },
 });
 
