@@ -162,6 +162,76 @@ class PhotoService {
     }
   }
 
+  /**
+   * 現在のユーザーの写真を取得（明示的にuser_idを指定）
+   */
+  async getMyPhotos(skip: number = 0, limit: number = 100): Promise<PaginatedPhotoResponse> {
+    try {
+      // 現在のユーザー情報を取得
+      const currentUser = await authService.getCurrentUser();
+      
+      const token = await this.getStoredToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      // user_idパラメータを明示的に指定
+      const url = `${API_BASE_URL}/photos/?skip=${skip}&limit=${limit}&user_id=${currentUser.id}`;
+      console.log('Fetching my photos from:', url);
+
+      const response = await fetch(url, { headers });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Get my photos error response:', errorText);
+        throw new Error('写真の取得に失敗しました');
+      }
+
+      const data = await response.json();
+      console.log(`Fetched ${data.items?.length || 0} photos for user ${currentUser.username}`);
+      return data;
+    } catch (error) {
+      console.error('Get my photos error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 特定ユーザーの写真を取得
+   */
+  async getUserPhotos(userId: string, skip: number = 0, limit: number = 100): Promise<PaginatedPhotoResponse> {
+    try {
+      const token = await this.getStoredToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const url = `${API_BASE_URL}/photos/?skip=${skip}&limit=${limit}&user_id=${userId}`;
+      console.log('Fetching user photos from:', url);
+
+      const response = await fetch(url, { headers });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Get user photos error response:', errorText);
+        throw new Error('写真の取得に失敗しました');
+      }
+
+      const data = await response.json();
+      console.log(`Fetched ${data.items?.length || 0} photos for user ${userId}`);
+      return data;
+    } catch (error) {
+      console.error('Get user photos error:', error);
+      throw error;
+    }
+  }
+
   async deletePhoto(photoId: string): Promise<void> {
     try {
       const response = await fetch(`${API_BASE_URL}/photos/${photoId}`, {

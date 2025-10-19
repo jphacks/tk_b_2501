@@ -20,8 +20,16 @@ export interface RegisterData {
   username: string;
 }
 
+export interface UserInfo {
+  id: string;
+  email: string;
+  username: string;
+  created_at: string;
+}
+
 class AuthService {
   private token: string | null = null;
+  private currentUser: UserInfo | null = null;
 
   /**
    * トークンを設定
@@ -44,8 +52,55 @@ class AuthService {
    */
   clearToken() {
     this.token = null;
+    this.currentUser = null;
     // TODO: AsyncStorageから削除
     // AsyncStorage.removeItem('auth_token');
+  }
+
+  /**
+   * 現在のユーザー情報を取得
+   */
+  async getCurrentUser(): Promise<UserInfo> {
+    // キャッシュがあればそれを返す
+    if (this.currentUser) {
+      return this.currentUser;
+    }
+
+    if (!this.token) {
+      throw new Error('認証が必要です');
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Get current user error:', errorText);
+        throw new Error('ユーザー情報の取得に失敗しました');
+      }
+
+      const userInfo: UserInfo = await response.json();
+      this.currentUser = userInfo;
+      console.log('Current user:', userInfo.username, 'ID:', userInfo.id);
+      
+      return userInfo;
+    } catch (error) {
+      console.error('Get current user error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * キャッシュされたユーザー情報を取得（非同期でない）
+   */
+  getCachedUser(): UserInfo | null {
+    return this.currentUser;
   }
 
   /**

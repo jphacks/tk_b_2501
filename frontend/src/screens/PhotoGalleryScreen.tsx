@@ -38,21 +38,7 @@ interface Photo {
 type LocalPhoto = Photo;
 
 // ローカル画像データ (ここは変更なし)
-const LOCAL_PHOTOS_DATA: LocalPhoto[] = [
-  { id: '1', name: 'Code', source: require('./../assets/images/code.jpeg'), createdAt: 1729236000000 },
-  { id: '2', name: 'Kazu', source: require('./../assets/images/kazu.jpeg'), createdAt: 1729236120000 },
-  { id: '3', name: 'Nabeshima', source: require('./../assets/images/nabeshima.jpeg'), createdAt: 1729235880000 },
-  { id: '4', name: 'スクショ', source: require('./../assets/images/スクショ.png'), createdAt: 1729236180000 },
-  { id: '5', name: '小テスト', source: require('./../assets/images/小テスト.jpeg'), createdAt: 1729236240000 },
-  { id: '6', name: '東大', source: require('./../assets/images/東大.jpeg'), createdAt: 1729236300000 },
-  { id: '7', name: '6号館屋上', source: require('./../assets/images/6号館屋上.jpeg') , createdAt: 1729236360000 },
-  { id: '8', name: '6号館屋上2', source: require('./../assets/images/6号館屋上2.jpeg') , createdAt: 1729236420000 },
-  { id: '9', name: 'Murakami', source: require('./../assets/images/murakami.jpeg') , createdAt: 1729236480000 },
-  { id: '10', name: 'Murakami 2', source: require('./../assets/images/murakami2.jpeg') , createdAt: 1729236540000 },
-  { id: '11', name: '一号館', source: require('./../assets/images/一号館.jpeg') , createdAt: 1729236600000 },
-  // { id: '12', name: '学祭 TUS', source: require('./../assets/images/学祭.TUS.JPG') ,createdAt: 1729236660000 }, // エラーが出た行はコメントアウトのまま
-  // { id: '13', name: '時間割', source: require('./../assets/images/時間割.PNG') ,createdAt: 1729236720000 }, // エラーが出た行はコメントアウトのまま
-];
+const LOCAL_PHOTOS_DATA: LocalPhoto[] = [];
 
 // ソート順序の型定義 (変更なし)
 type SortOrder = 'added_desc' | 'added_asc' | 'random';
@@ -79,8 +65,9 @@ const PhotoGalleryScreen = () => {
   // APIから写真を取得する関数
   const loadPhotosFromAPI = async (): Promise<Photo[]> => {
     try {
-      const response = await photoService.getPhotos(0, 100);
-      console.log('Fetched photos from API:', response.items.length);
+      // 自分の写真のみを取得（user_idを明示的に指定）
+      const response = await photoService.getMyPhotos(0, 100);
+      console.log('Fetched my photos from API:', response.items.length);
       
       return response.items.map(photo => {
         // s3_keyには既にS3のフルURLが入っている

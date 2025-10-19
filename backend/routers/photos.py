@@ -182,22 +182,32 @@ async def get_photos(
     """写真一覧を取得"""
     query = db.query(Photo)
 
-    # 公開範囲によるフィルタリング
-    if visibility:
-        query = query.filter(Photo.visibility == visibility)
-    elif not current_user:
-        # 未認証ユーザーは公開写真のみ
-        query = query.filter(Photo.visibility == VisibilityEnum.public)
-    elif user_id and user_id != current_user.id:
-        # 他のユーザーの写真は公開・非公開リストのみ
-        query = query.filter(
-            Photo.visibility.in_(
-                [VisibilityEnum.public, VisibilityEnum.unlisted])
-        )
-
     # ユーザーIDによるフィルタリング
     if user_id:
+        # 特定のユーザーの写真を取得
         query = query.filter(Photo.user_id == user_id)
+
+        # 公開範囲によるフィルタリング
+        if visibility:
+            query = query.filter(Photo.visibility == visibility)
+        elif not current_user or user_id != current_user.id:
+            # 他のユーザーの写真を見る場合は公開・非公開リストのみ
+            query = query.filter(
+                Photo.visibility.in_(
+                    [VisibilityEnum.public, VisibilityEnum.unlisted])
+            )
+    else:
+        # user_idが指定されていない場合
+        if current_user:
+            # 認証済みユーザーは自分の写真のみ取得
+            query = query.filter(Photo.user_id == current_user.id)
+            if visibility:
+                query = query.filter(Photo.visibility == visibility)
+        else:
+            # 未認証ユーザーは公開写真のみ
+            query = query.filter(Photo.visibility == VisibilityEnum.public)
+            if visibility:
+                query = query.filter(Photo.visibility == visibility)
 
     # 総数を取得
     total = query.count()
