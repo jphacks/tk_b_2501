@@ -1,5 +1,7 @@
 // src/services/photoService.ts
 
+import authService from './authService';
+
 const API_BASE_URL = 'http://localhost:8000'; // 開発環境のAPI URL
 
 export interface PhotoUploadData {
@@ -50,8 +52,19 @@ class PhotoService {
   }
 
   private async getStoredToken(): Promise<string | null> {
-    // AsyncStorageからトークンを取得する実装
-    // 今は仮の実装
+    // authServiceからトークンを取得
+    const token = authService.getToken();
+    
+    if (token) {
+      console.log('Using token from authService');
+      return token;
+    }
+    
+    // 開発環境用のフォールバック（テスト用）
+    if (__DEV__) {
+      console.warn('No token in authService. Please login first.');
+    }
+    
     return null;
   }
 
@@ -60,6 +73,20 @@ class PhotoService {
     uploadData: PhotoUploadData = {}
   ): Promise<PhotoResponse> {
     try {
+      // クエリパラメータを構築
+      const queryParams = new URLSearchParams();
+      if (uploadData.title) queryParams.append('title', uploadData.title);
+      if (uploadData.description) queryParams.append('description', uploadData.description);
+      if (uploadData.lat !== undefined) queryParams.append('lat', String(uploadData.lat));
+      if (uploadData.lng !== undefined) queryParams.append('lng', String(uploadData.lng));
+      if (uploadData.accuracy_m !== undefined) queryParams.append('accuracy_m', String(uploadData.accuracy_m));
+      if (uploadData.address) queryParams.append('address', uploadData.address);
+      if (uploadData.visibility) {
+        // visibilityを小文字に変換
+        queryParams.append('visibility', uploadData.visibility.toLowerCase());
+      }
+      if (uploadData.taken_at) queryParams.append('taken_at', uploadData.taken_at);
+
       const formData = new FormData();
       
       // 画像ファイルを追加
@@ -69,16 +96,6 @@ class PhotoService {
         name: 'photo.jpg',
       } as any);
 
-      // その他のデータをフォームフィールドとして追加
-      if (uploadData.title) formData.append('title', uploadData.title);
-      if (uploadData.description) formData.append('description', uploadData.description);
-      if (uploadData.lat !== undefined) formData.append('lat', String(uploadData.lat));
-      if (uploadData.lng !== undefined) formData.append('lng', String(uploadData.lng));
-      if (uploadData.accuracy_m !== undefined) formData.append('accuracy_m', String(uploadData.accuracy_m));
-      if (uploadData.address) formData.append('address', uploadData.address);
-      if (uploadData.visibility) formData.append('visibility', uploadData.visibility);
-      if (uploadData.taken_at) formData.append('taken_at', uploadData.taken_at);
-
       // 認証トークンを取得
       const token = await this.getStoredToken();
       const headers: Record<string, string> = {};
@@ -87,14 +104,24 @@ class PhotoService {
       }
       // multipart/form-dataの場合、Content-Typeは自動設定されるため指定しない
 
-      const response = await fetch(`${API_BASE_URL}/photos/upload`, {
+      const url = `${API_BASE_URL}/photos/upload?${queryParams.toString()}`;
+      console.log('Uploading to:', url);
+
+      const response = await fetch(url, {
         method: 'POST',
         headers,
         body: formData,
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorText = await response.text();
+        console.error('Upload error response:', errorText);
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { detail: errorText || 'アップロードに失敗しました' };
+        }
         throw new Error(errorData.detail || 'アップロードに失敗しました');
       }
 
@@ -107,18 +134,28 @@ class PhotoService {
 
   async getPhotos(skip: number = 0, limit: number = 100): Promise<PaginatedPhotoResponse> {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/photos/?skip=${skip}&limit=${limit}`,
-        {
-          headers: await this.getAuthHeaders(),
-        }
-      );
+      const token = await this.getStoredToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const url = `${API_BASE_URL}/photos/?skip=${skip}&limit=${limit}`;
+      console.log('Fetching photos from:', url);
+
+      const response = await fetch(url, { headers });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Get photos error response:', errorText);
         throw new Error('写真の取得に失敗しました');
       }
 
-      return await response.json();
+      const data = await response.json();
+      console.log(`Fetched ${data.items?.length || 0} photos`);
+      return data;
     } catch (error) {
       console.error('Get photos error:', error);
       throw error;

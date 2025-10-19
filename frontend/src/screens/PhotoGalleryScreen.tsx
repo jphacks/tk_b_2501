@@ -131,9 +131,11 @@ const PhotoGalleryScreen = () => {
       const imageResult = await showImagePicker();
       
       if (imageResult) {
+        console.log('Uploading image:', imageResult.uri);
         await photoService.uploadPhoto(imageResult.uri, {
           title: '新しい写真',
-          visibility: 'PRIVATE',
+          visibility: 'PUBLIC', // 開発環境ではPUBLICに設定
+          description: 'React Nativeからアップロード',
         });
         
         // 写真を再読み込み
@@ -142,7 +144,8 @@ const PhotoGalleryScreen = () => {
       }
     } catch (error) {
       console.error('アップロードエラー:', error);
-      Alert.alert('エラー', '写真のアップロードに失敗しました');
+      const errorMessage = error instanceof Error ? error.message : '写真のアップロードに失敗しました';
+      Alert.alert('エラー', errorMessage);
     } finally {
       setUploading(false);
     }
