@@ -19,7 +19,7 @@ const App = () => {
   // 本来はユーザーのログイン状態（トークンの有無など）を管理しますが、
   // 今は開発のために、仮の変数で表示を切り替えます。
   // この値を false に変えると、ログイン画面が表示されます。
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const handleLoginSuccess = () => {
     setIsLoggedIn(true);

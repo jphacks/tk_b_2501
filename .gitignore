@@ -46,6 +46,7 @@ venv.bak/
 .env.production.local
 
 # Database
+pgadmin_data/sessions/
 *.db
 *.sqlite3
 
