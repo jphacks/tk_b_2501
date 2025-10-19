@@ -29,7 +29,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/mobileapp
+      - DATABASE_URL=${DATABASE_URL}
       - SECRET_KEY=dev-secret-key-change-in-production
       - DEBUG=True
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
