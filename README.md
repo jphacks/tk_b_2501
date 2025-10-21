@@ -1,4 +1,4 @@
-# GeoPhoto
+# GeoPhoto (川田テクノシステム株式会社賞　受賞）
 <p align="center">
   <img src="./slide/Slide1.jpg" width="900">
 </p>
